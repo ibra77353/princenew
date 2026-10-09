@@ -1,0 +1,29 @@
+# شبكة البرنس — إعداد Apache: مسارات نظيفة + حماية المجلدات الحساسة
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # إذا كان التطبيق داخل مجلد فرعي، اضبط RewriteBase على اسم المجلد
+    RewriteBase /
+
+    # لا تعِد كتابة الملفات والأصول الموجودة فعليًا
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # كل الطلبات الأخرى إلى نقطة الدخول
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# منع استعراض المجلدات
+Options -Indexes
+
+# حماية الملفات والمجلدات الحساسة (احتياط إضافي فوق ملفات .htaccess الداخلية)
+<FilesMatch "\.(sql|json|md|log|ini|bak|zip)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "same-origin"
+</IfModule>
