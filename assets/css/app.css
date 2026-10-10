@@ -566,7 +566,7 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
         bottom: 0;
         height: auto;
         inset-inline-start: 0;
-        width: var(--sidebar-max-width);
+        /* لا عرض ثابت هنا: يرث العرض التلقائي (max-content بين 12rem و18rem) نفسه */
         transform: translateX(100%);
         box-shadow: var(--shadow-lg);
     }
