@@ -406,6 +406,18 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 .table td.wrap { white-space: normal; min-width: 12rem; }
 .table tfoot td { font-weight: 700; background: var(--muted); }
 
+/* ── نموذج البيع: أسطر الفاتورة كبطاقات وملخّص الإجمالي ──────────────────── */
+.sale-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.sale-row { display: grid; gap: 0.5rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); }
+.sale-row__label { font-size: 0.7rem; font-weight: 600; color: var(--muted-foreground); }
+.sale-row__meta { display: flex; align-items: flex-end; gap: 0.5rem; }
+.sale-row__meta .field { flex: 1 1 auto; min-width: 0; }
+.sale-row__total { display: flex; flex-direction: column; gap: 0.1rem; padding-bottom: 0.55rem; white-space: nowrap; }
+.sale-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--muted); }
+.sale-summary__value { font-size: 1.05rem; font-weight: 800; margin-top: 0.1rem; }
+.sale-summary__value--total { color: var(--primary); }
+.sale-summary__value--remaining { color: var(--tone-red); }
+
 /* ── الشارات والتنبيهات ──────────────────────────────────────────────────── */
 .badge {
     display: inline-flex;
@@ -591,6 +603,8 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 @media (max-width: 639px) {
     /* على الجوال: عمود واحد (بطاقات الباقات وأمثالها) */
     .grid--single { grid-template-columns: minmax(0, 1fr); }
+    /* نموذج البيع: أزرار الإجراءات بعرض كامل أسفل النموذج */
+    .sale-actions { flex-direction: column-reverse; align-items: stretch; }
     .modal { align-items: flex-end; padding: 0; }
     .modal__panel {
         max-width: none;

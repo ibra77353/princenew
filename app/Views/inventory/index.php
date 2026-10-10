@@ -56,7 +56,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
             </div>
         </div>
     <?php else: ?>
-        <div class="grid grid--cards">
+        <div class="grid grid--cards grid--single">
             <?php foreach ($summary as $row): ?>
                 <div class="card card--pad">
                     <div class="row">
@@ -67,7 +67,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                     <p class="big-number text-primary mt-2"><?= e((string) $row['current']) ?></p>
                     <p class="text-xs text-muted">الشَدات المتبقية</p>
 
-                    <div class="grid grid--cards mt-3 text-center text-xs">
+                    <div class="grid grid--auto mt-3 text-center text-xs">
                         <div style="padding:0.4rem;border-radius:var(--radius-sm);background:color-mix(in srgb, var(--tone-green) 10%, transparent)">
                             <p class="text-bold text-success"><?= e((string) $row['added']) ?></p>
                             <p class="text-muted">مضاف</p>

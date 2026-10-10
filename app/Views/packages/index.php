@@ -27,7 +27,7 @@
     <div class="grid grid--cards grid--single">
         <?php foreach ($packages as $package): ?>
             <?php $row = $stock[(int) $package['id']] ?? ['current' => 0, 'value' => 0, 'added' => 0, 'sold' => 0, 'returned' => 0, 'adjust_net' => 0]; ?>
-            <div class="card card--pad">
+            <div class="card card--pad" style="border-top:4px solid <?= e($package['color']) ?>">
                 <div class="row row--between">
                     <div class="row">
                         <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($package['color']) ?>"></span>
