@@ -24,7 +24,7 @@
         </div>
     </div>
 <?php else: ?>
-    <div class="grid grid--cards">
+    <div class="grid grid--cards grid--single">
         <?php foreach ($packages as $package): ?>
             <?php $row = $stock[(int) $package['id']] ?? ['current' => 0, 'value' => 0, 'added' => 0, 'sold' => 0, 'returned' => 0, 'adjust_net' => 0]; ?>
             <div class="card card--pad">

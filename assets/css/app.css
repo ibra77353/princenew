@@ -589,6 +589,8 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 
 /* ── النوافذ المنبثقة على الجوال: ورقة سفلية كما في مرجع التصميم ──────── */
 @media (max-width: 639px) {
+    /* على الجوال: عمود واحد (بطاقات الباقات وأمثالها) */
+    .grid--single { grid-template-columns: minmax(0, 1fr); }
     .modal { align-items: flex-end; padding: 0; }
     .modal__panel {
         max-width: none;
