@@ -36,7 +36,7 @@ final class PackagesController extends Controller
             $data = $this->packageData();
             $this->validate($data);
 
-            $id = (new Package())->create([
+            $id = $this->createPackage([
                 'name' => $data['name'],
                 'price' => $data['price'],
                 'data_mb' => $data['data_mb'],
@@ -64,9 +64,9 @@ final class PackagesController extends Controller
             }
 
             $data = $this->packageData();
-            $this->validate($data);
+            $this->validate($data, $id);
 
-            (new Package())->update($id, [
+            $this->updatePackage($id, [
                 'name' => $data['name'],
                 'price' => $data['price'],
                 'data_mb' => $data['data_mb'],
@@ -142,7 +142,7 @@ final class PackagesController extends Controller
     }
 
     /** @param array<string,mixed> $data */
-    private function validate(array $data): void
+    private function validate(array $data, ?int $exceptId = null): void
     {
         $validator = (new Validator($data))
             ->required('name', 'اسم الباقة')
@@ -157,5 +157,56 @@ final class PackagesController extends Controller
         if (!preg_match('/^#[0-9a-fA-F]{6}$/', (string) $data['color'])) {
             throw new \RuntimeException('اللون يجب أن يكون بصيغة #RRGGBB.');
         }
+
+        $this->assertNameIsUnique((string) $data['name'], $exceptId);
+    }
+
+    /**
+     * منع تكرار اسم الباقة على مستوى الخادم (المسافات الطرفية تُشذَّب قبل المقارنة).
+     * المقارنة تتم بترميز utf8mb4_unicode_ci فلا تفرّق بين حالة الأحرف.
+     */
+    private function assertNameIsUnique(string $name, ?int $exceptId = null): void
+    {
+        $name = trim($name);
+        $sql = 'SELECT id FROM packages WHERE name = ?';
+        $params = [$name];
+        if ($exceptId !== null) {
+            $sql .= ' AND id <> ?';
+            $params[] = $exceptId;
+        }
+
+        if (Database::scalar($sql . ' LIMIT 1', $params) !== null) {
+            throw new \RuntimeException('توجد باقة بالاسم «' . $name . '» مسبقًا. اختر اسمًا آخر.');
+        }
+    }
+
+    /** @param array<string,mixed> $data */
+    private function createPackage(array $data): int
+    {
+        try {
+            return (new Package())->create($data);
+        } catch (\PDOException $e) {
+            throw $this->uniquenessError($e);
+        }
+    }
+
+    /** @param array<string,mixed> $data */
+    private function updatePackage(int $id, array $data): void
+    {
+        try {
+            (new Package())->update($id, $data);
+        } catch (\PDOException $e) {
+            throw $this->uniquenessError($e);
+        }
+    }
+
+    /** رسالة واضحة عند تصادم قيد عدم التكرار في قاعدة البيانات (حماية من الطلبات المتزامنة). */
+    private function uniquenessError(\PDOException $e): \RuntimeException
+    {
+        if ($e->getCode() === '23000' || (int) ($e->errorInfo[1] ?? 0) === 1062) {
+            return new \RuntimeException('توجد باقة بالاسم نفسه مسبقًا. اختر اسمًا آخر.');
+        }
+
+        return new \RuntimeException('تعذر حفظ الباقة. تحقق من البيانات وحاول مرة أخرى.');
     }
 }

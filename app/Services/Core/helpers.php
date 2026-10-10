@@ -62,10 +62,13 @@ if (!function_exists('num')) {
 }
 
 if (!function_exists('amount')) {
-    /** إخراج المبلغ كرقم خام للعرض داخل الصفحات. */
+    /** إخراج المبلغ كرقم خام للعرض داخل الصفحات (بلا منازل عشرية عندما تكون القيمة عددًا صحيحًا). */
     function amount(mixed $value): string
     {
-        return number_format((float) ($value ?? 0), 2, '.', '');
+        $number = (float) ($value ?? 0);
+        $decimals = $number == (float) (int) $number ? 0 : 2;
+
+        return number_format($number, $decimals, '.', '');
     }
 }
 

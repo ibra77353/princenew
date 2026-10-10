@@ -14,7 +14,7 @@
     <div class="field">
         <label for="pkg-price">سعر الشدة</label>
         <input class="input" id="pkg-price" name="price" type="number" min="0" step="1" required
-               value="<?= e($package['price'] ?? old('price', '0')) ?>">
+               value="<?= e(isset($package['price']) ? amount($package['price']) : old('price', '0')) ?>">
     </div>
 
     <div class="field">

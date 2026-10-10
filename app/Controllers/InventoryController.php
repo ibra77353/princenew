@@ -42,7 +42,6 @@ final class InventoryController extends Controller
         $this->action(function (): void {
             $packageId = $this->int('package_id');
             $quantity = $this->input('quantity');
-            $unitCost = $this->moneyInput('unit_price');
 
             if ($packageId <= 0) {
                 throw new \RuntimeException('اختر الباقة.');
@@ -53,11 +52,9 @@ final class InventoryController extends Controller
             if ((int) $quantity <= 0) {
                 throw new \RuntimeException('كمية الشدات يجب أن تكون أكبر من صفر.');
             }
-            if ($unitCost < 0) {
-                throw new \RuntimeException('تكلفة الشدة غير صالحة.');
-            }
 
-            InventoryService::add($packageId, (int) $quantity, $unitCost, $this->str('notes'));
+            // سعر الشدة يُعتمد من الباقة نفسها ولا يُقبل إدخال سعر مستقل.
+            InventoryService::add($packageId, (int) $quantity, $this->str('notes'));
         }, '/inventory', 'تمت إضافة المخزون بنجاح.');
     }
 

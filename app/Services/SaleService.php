@@ -126,7 +126,7 @@ final class SaleService
                 InventoryService::recordSale(
                     $line['package_id'],
                     $line['quantity'],
-                    InventoryService::averageCost($line['package_id']),
+                    (float) $line['unit_price'],
                     $saleId,
                     $invoiceNumber
                 );

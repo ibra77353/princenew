@@ -323,7 +323,7 @@
             if (paidInput) {
                 paidInput.disabled = isCash;
                 if (isCash) {
-                    paidInput.value = total.toFixed(2);
+                    paidInput.value = Number.isInteger(total) ? String(total) : total.toFixed(2);
                 }
             }
             var paid = isCash ? total : Number(paidInput && paidInput.value ? paidInput.value : 0);

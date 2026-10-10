@@ -88,7 +88,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                         </p>
                     <?php endif; ?>
 
-                    <p class="text-xs text-muted mt-1">متوسط التكلفة: <?= e(money($row['average_cost'])) ?></p>
+                    <p class="text-xs text-muted mt-1">سعر الشدة: <?= e(money($row['unit_price'])) ?></p>
                     <p class="text-xs text-muted">قيمة المخزون: <?= e(money($row['value'])) ?></p>
 
                     <button type="button" class="btn btn--outline btn--sm btn--block mt-2"
@@ -117,7 +117,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                         <th>الباقة</th>
                         <th>نوع الحركة</th>
                         <th>الكمية</th>
-                        <th>تكلفة الشدة</th>
+                        <th>سعر الشدة</th>
                         <th>السبب</th>
                         <th>التاريخ</th>
                     </tr>
@@ -165,14 +165,15 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                     <select class="select" id="inv-package" name="package_id" required>
                         <option value="">اختر الباقة</option>
                         <?php foreach ($summary as $row): ?>
-                            <option value="<?= e((string) $row['package_id']) ?>"><?= e($row['name']) ?> (المخزون: <?= e((string) $row['current']) ?>)</option>
+                            <option value="<?= e((string) $row['package_id']) ?>" data-price="<?= e(amount($row['unit_price'])) ?>"><?= e($row['name']) ?> (المخزون: <?= e((string) $row['current']) ?>)</option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="grid grid--form">
                     <div class="field">
                         <label for="inv-cost">سعر الشدة</label>
-                        <input class="input" id="inv-cost" name="unit_price" type="number" min="0" step="1" value="0" required>
+                        <input class="input" id="inv-cost" type="text" value="" readonly data-inventory-price>
+                        <p class="text-xs text-muted mt-1">يُعتمد سعر الشدة من الباقة تلقائيًا ولا يُدخل هنا.</p>
                     </div>
                     <div class="field">
                         <label for="inv-quantity">كمية الشدات</label>
@@ -228,3 +229,18 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
         </div>
     </div>
 </div>
+
+<script>
+    // عرض سعر الشدة المعتمد من الباقة المختارة (قراءة فقط) — السعر النهائي يُحدَّد على الخادم.
+    (function () {
+        var select = document.getElementById('inv-package');
+        var output = document.querySelector('[data-inventory-price]');
+        if (!select || !output) { return; }
+        function sync() {
+            var option = select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
+            output.value = option && option.getAttribute('data-price') ? option.getAttribute('data-price') : '';
+        }
+        select.addEventListener('change', sync);
+        sync();
+    })();
+</script>

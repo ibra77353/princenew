@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS packages (
     created_at  DATETIME      NOT NULL,
     updated_at  DATETIME      NOT NULL,
     PRIMARY KEY (id),
+    UNIQUE KEY uq_packages_name (name),
     KEY idx_packages_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -60,6 +61,18 @@ CREATE TABLE IF NOT EXISTS inventory_movements (
     KEY idx_inv_operation (related_operation_type, related_operation_id),
     CONSTRAINT fk_inv_package FOREIGN KEY (package_id) REFERENCES packages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_inv_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── أرصدة المخزون (سجل واحد نشط لكل باقة) ──────────────────────────────────
+-- المفتاح الأساسي على package_id يمنع إنشاء أكثر من سجل مخزون للباقة نفسها.
+-- يُحدَّث هذا الرصيد تراكميًا داخل معاملة عند كل حركة، وتبقى سجلات الحركة في
+-- جدول inventory_movements كسجل تاريخي يمكن مراجعته.
+CREATE TABLE IF NOT EXISTS inventory_stock (
+    package_id INT UNSIGNED NOT NULL,
+    quantity   INT          NOT NULL DEFAULT 0,
+    updated_at DATETIME     NOT NULL,
+    PRIMARY KEY (package_id),
+    CONSTRAINT fk_stock_package FOREIGN KEY (package_id) REFERENCES packages (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── الموزعون ────────────────────────────────────────────────────────────────
@@ -277,3 +290,16 @@ INSERT IGNORE INTO packages (id, name, price, data_mb, hours, color, status, des
     (3, '250',  250.00, 0, 0, '#10b981', 'active', NULL, NOW(), NOW()),
     (4, '500',  500.00, 0, 0, '#f59e0b', 'active', NULL, NOW(), NOW()),
     (5, '1000', 1000.00, 0, 0, '#8b5cf6', 'active', NULL, NOW(), NOW());
+
+-- تهيئة أرصدة المخزون للباقات التي لها حركات ولا يوجد لها صف رصيد بعد
+-- (لا يُنشأ سجل جديد عند كل إضافة؛ يُجمع الرصيد في صف واحد لكل باقة).
+INSERT IGNORE INTO inventory_stock (package_id, quantity, updated_at)
+SELECT package_id,
+       SUM(CASE WHEN type IN ('add','return') THEN quantity
+                WHEN type = 'sell' THEN -quantity
+                WHEN type = 'adjust' AND direction = 'up' THEN quantity
+                WHEN type = 'adjust' AND direction = 'down' THEN -quantity
+                ELSE 0 END),
+       NOW()
+FROM inventory_movements
+GROUP BY package_id;

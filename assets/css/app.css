@@ -454,17 +454,22 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 .alert {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 1rem;
-    border-radius: var(--radius);
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
+    gap: 0.4rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    margin-bottom: 0.4rem;
+    max-width: 100%;
 }
 
-.alert--success { background: color-mix(in srgb, var(--tone-green) 12%, transparent); color: var(--tone-green); }
-.alert--error { background: color-mix(in srgb, var(--tone-red) 12%, transparent); color: var(--tone-red); }
-.alert--warning { background: color-mix(in srgb, var(--tone-amber) 14%, transparent); color: var(--tone-amber); }
-.alert--info { background: var(--primary-soft); color: var(--primary); }
+.alert svg { width: 0.9rem; height: 0.9rem; flex: 0 0 auto; }
+
+.alert--success { background: color-mix(in srgb, var(--tone-green) 12%, transparent); color: var(--tone-green); border-color: color-mix(in srgb, var(--tone-green) 28%, transparent); }
+.alert--error { background: color-mix(in srgb, var(--tone-red) 12%, transparent); color: var(--tone-red); border-color: color-mix(in srgb, var(--tone-red) 28%, transparent); }
+.alert--warning { background: color-mix(in srgb, var(--tone-amber) 14%, transparent); color: var(--tone-amber); border-color: color-mix(in srgb, var(--tone-amber) 30%, transparent); }
+.alert--info { background: var(--primary-soft); color: var(--primary); border-color: color-mix(in srgb, var(--primary) 28%, transparent); }
 
 /* ── الحالات الفارغة والتحميل ────────────────────────────────────────────── */
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; }

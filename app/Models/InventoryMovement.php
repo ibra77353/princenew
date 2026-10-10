@@ -11,7 +11,7 @@ final class InventoryMovement extends Model
 {
     protected string $table = 'inventory_movements';
 
-    /** سطر المخزون المجمّع لكل باقة (مضاف/مباع/مرتجع/تسوية/الحالي). */
+    /** سطر المخزون المجمّع لكل باقة (الرصيد النشط + مضاف/مباع/مرتجع/تسوية). */
     public function stockSummary(): array
     {
         $rows = Database::all(
@@ -20,22 +20,19 @@ final class InventoryMovement extends Model
                 p.name,
                 p.color,
                 p.status,
+                p.price AS unit_price,
+                COALESCE(s.quantity, 0) AS current,
                 COALESCE(SUM(CASE WHEN m.type IN ('add','return') THEN m.quantity ELSE 0 END), 0) AS added,
                 COALESCE(SUM(CASE WHEN m.type = 'sell' THEN m.quantity ELSE 0 END), 0) AS sold,
                 COALESCE(SUM(CASE WHEN m.type = 'return' THEN m.quantity ELSE 0 END), 0) AS returned,
                 COALESCE(SUM(CASE WHEN m.type = 'adjust' AND m.direction = 'up' THEN m.quantity
                                   WHEN m.type = 'adjust' AND m.direction = 'down' THEN -m.quantity ELSE 0 END), 0) AS adjust_net,
                 COALESCE(SUM(CASE WHEN m.type = 'add' THEN m.quantity * m.unit_cost ELSE 0 END), 0) AS added_cost,
-                COALESCE(SUM(CASE WHEN m.type = 'add' THEN m.quantity ELSE 0 END), 0) AS added_qty,
-                COALESCE(SUM(CASE WHEN m.type = 'add' THEN m.quantity
-                                  WHEN m.type = 'sell' THEN -m.quantity
-                                  WHEN m.type = 'return' THEN m.quantity
-                                  WHEN m.type = 'adjust' AND m.direction = 'up' THEN m.quantity
-                                  WHEN m.type = 'adjust' AND m.direction = 'down' THEN -m.quantity
-                                  ELSE 0 END), 0) AS current
+                COALESCE(SUM(CASE WHEN m.type = 'add' THEN m.quantity ELSE 0 END), 0) AS added_qty
              FROM packages p
+             LEFT JOIN inventory_stock s ON s.package_id = p.id
              LEFT JOIN inventory_movements m ON m.package_id = p.id
-             GROUP BY p.id, p.name, p.color, p.status
+             GROUP BY p.id, p.name, p.color, p.status, p.price, s.quantity
              ORDER BY p.price ASC, p.id ASC"
         );
 
@@ -45,29 +42,32 @@ final class InventoryMovement extends Model
             $row['sold'] = (int) $row['sold'];
             $row['returned'] = (int) $row['returned'];
             $row['adjust_net'] = (int) $row['adjust_net'];
+            $row['unit_price'] = round((float) $row['unit_price'], 2);
             $averageCost = (int) $row['added_qty'] > 0 ? (float) $row['added_cost'] / (int) $row['added_qty'] : 0.0;
             $row['average_cost'] = round($averageCost, 2);
-            $row['value'] = round(max(0, (int) $row['current']) * $averageCost, 2);
+            $row['value'] = round(max(0, (int) $row['current']) * $row['unit_price'], 2);
         }
         unset($row);
 
         return $rows;
     }
 
+    /** الرصيد النشط للباقة من صف المخزون الواحد. */
     public function currentStock(int $packageId): int
     {
-        $value = Database::scalar(
-            "SELECT COALESCE(SUM(CASE
-                WHEN type IN ('add','return') THEN quantity
-                WHEN type = 'sell' THEN -quantity
-                WHEN type = 'adjust' AND direction = 'up' THEN quantity
-                WHEN type = 'adjust' AND direction = 'down' THEN -quantity
-                ELSE 0 END), 0)
-             FROM inventory_movements WHERE package_id = ?",
-            [$packageId]
-        );
+        $value = Database::scalar('SELECT quantity FROM inventory_stock WHERE package_id = ?', [$packageId]);
 
-        return (int) $value;
+        return $value === null ? 0 : (int) $value;
+    }
+
+    /** تحديث الرصيد تراكميًا بشكل ذرّي (صف واحد لكل باقة بفضل المفتاح الأساسي). */
+    public function applyDelta(int $packageId, int $delta): void
+    {
+        Database::run(
+            'INSERT INTO inventory_stock (package_id, quantity, updated_at) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity), updated_at = VALUES(updated_at)',
+            [$packageId, $delta, now()]
+        );
     }
 
     public function recent(int $limit = 200): array

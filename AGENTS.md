@@ -111,3 +111,42 @@ docker compose -f docker-compose.base44.yml ps                                  
 
 اختبار وظيفي كامل بعد إنشاء المدير: تسجيل الدخول، إضافة باقة/مخزون، بيع نقدي وآجل، تحصيل جزئي،
 إلغاء فاتورة مع حركات العكس، مصروف/سحب/دفعة خط، مطابقة رصيد الصندوق والتقارير، النسخ الاحتياطي والاستعادة.
+
+---
+
+## رصيد المخزون وسعر الشدة (تعديلات لاحقة)
+
+- **جدول `inventory_stock`** هو الرصيد النشط للمخزون: صف **واحد لكل باقة** (المفتاح الأساسي `package_id`
+  يمنع تكرار السجل). `inventory_movements` يبقى سجل الحركات التاريخي، وكل حركة تُحدِّث الرصيد تراكميًا
+  داخل معاملة (`InventoryService::movement()` عبر `InventoryMovement::applyDelta()`). إضافة كمية لا تُصفّر
+  الرصيد ولا تنشئ سجلًا جديدًا؛ لذلك قراءة المخزون (لوحة التحكم/التقارير/المبيعات) تعتمد على الرصيد المجمّع.
+- **سعر الشدة موحّد** ومصدره الوحيد حقل `packages.price`. شاشة المخزون لا تقبل سعرًا مستقلًا: الخادم
+  يتجاهل أي `unit_price` مُرسَل ويحفظ سعر الباقة وقت الحركة في `inventory_movements.unit_cost`.
+  تعديل سعر الباقة لا يغيّر الفواتير أو الحركات السابقة (الأسعار محفوظة لقطةً في `sale_items.unit_price`
+  و`inventory_movements.unit_cost`).
+- **منع تكرار اسم الباقة**: قيد `UNIQUE KEY uq_packages_name (name)` على جدول `packages`، مع تحقق على
+  الخادم في `PackagesController::assertNameIsUnique()` (يشذّب المسافات الطرفية، والمقارنة بترميز
+  utf8mb4_unicode_ci غير حساسة لحالة الأحرف). التعديل إلى الاسم الحالي مسموح.
+- **تنسيق الأسعار**: `money()` يعرض المبالغ كأعداد صحيحة، و`amount()` يُخرج عددًا صحيحًا بلا منازل عشرية
+  عندما تكون القيمة صحيحة (تُستخدم في حقول النماذج وسمات `data-price`/`data-values`).
+
+### تطبيق مخطط جديد على قاعدة قائمة
+عند إضافة جداول/قيود جديدة إلى `database/schema.sql` لا يعيد `db-init` تطبيقها على قاعدة موجودة
+(`CREATE TABLE IF NOT EXISTS` لا يعدّل جدولًا قائمًا). لذلك طُبّق التالي يدويًا مرة واحدة على قاعدة قائمة
+(انسخه إن احتجت على بيئة أخرى بعد التأكد من عدم وجود أسماء باقات مكررة):
+
+```bash
+docker compose -f docker-compose.base44.yml exec -T db mysql --default-character-set=utf8mb4 -u root -pprince_root_dev prince_net -e "
+CREATE TABLE IF NOT EXISTS inventory_stock (
+    package_id INT UNSIGNED NOT NULL,
+    quantity   INT          NOT NULL DEFAULT 0,
+    updated_at DATETIME     NOT NULL,
+    PRIMARY KEY (package_id),
+    CONSTRAINT fk_stock_package FOREIGN KEY (package_id) REFERENCES packages (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ALTER TABLE packages ADD UNIQUE KEY uq_packages_name (name);"
+```
+
+لتهيئة أرصدة المخزون من الحركات القائمة: `INSERT IGNORE INTO inventory_stock (package_id, quantity, updated_at)
+SELECT package_id, SUM(CASE ... END), NOW() FROM inventory_movements GROUP BY package_id;` (مضمّن في `schema.sql`).
+عند حذف باقات لا حاجة لحذف صفوف `inventory_stock` يدويًا (مفتاح خارجي `ON DELETE CASCADE`).
