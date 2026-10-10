@@ -41,7 +41,7 @@
                 <p class="big-number text-primary mt-2"><?= e(money($package['price'])) ?></p>
                 <p class="text-xs text-muted">سعر الشدة</p>
 
-                <div class="grid grid--cards mt-3 text-center text-xs">
+                <div class="grid grid--auto mt-3 text-center text-xs">
                     <div class="card card--pad" style="padding:0.5rem">
                         <p class="text-bold text-success"><?= e((string) $row['added']) ?></p>
                         <p class="text-muted">مضاف</p>
@@ -67,10 +67,6 @@
                     <span class="text-xs text-bold"><?= e(money($row['value'])) ?></span>
                 </div>
 
-                <div class="text-xs text-muted mt-2">
-                    حجم البيانات: <?= e((string) $package['data_mb']) ?> ميغابايت •
-                    الساعات: <?= e((string) $package['hours']) ?>
-                </div>
                 <?php if (!empty($package['description'])): ?>
                     <p class="text-xs text-muted mt-1"><?= e($package['description']) ?></p>
                 <?php endif; ?>

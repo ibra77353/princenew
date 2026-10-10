@@ -261,6 +261,10 @@ table { border-collapse: collapse; width: 100%; }
 .grid { display: grid; gap: 0.875rem; }
 .grid--stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid--cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* شبكة تلقائية: عدد الأعمدة وعرضها يتبعان النصوص والمساحة المتاحة، لجميع المقاسات */
+.grid--auto { display: flex; flex-wrap: wrap; }
+.grid--auto > * { flex: 1 1 auto; min-width: min-content; }
 .grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid--form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid--full { grid-column: 1 / -1; }
