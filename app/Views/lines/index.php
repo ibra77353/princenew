@@ -29,7 +29,7 @@
             <div class="card card--pad">
                 <div class="row row--between">
                     <div class="row">
-                        <span style="color: var(--primary)"><?= icon('wifi') ?></span>
+                        <span class="text-primary"><?= icon('wifi') ?></span>
                         <h3 class="text-lg"><?= e($line['name']) ?></h3>
                     </div>
                     <span class="badge <?= $line['status'] === 'active' ? 'badge--success' : 'badge--danger' ?>">

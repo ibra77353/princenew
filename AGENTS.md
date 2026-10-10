@@ -102,6 +102,9 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
 
 ## التحقق السريع بعد أي تعديل
 
+> لا يوجد خادم تطوير بـ live reload: Apache يقدّم ملفات PHP/CSS من الـ bind mount مباشرة،
+> فبعد أي تعديل أعد تحميل المعاينة (reload_preview) لرؤية النتيجة. لا تعتمد على تحديث تلقائي.
+
 ```bash
 curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/        # 302 → /setup أو /login
 curl -s http://localhost:3000/setup | grep -oE "<h1>[^<]*</h1>"                         # يظهر نموذج إعداد المدير

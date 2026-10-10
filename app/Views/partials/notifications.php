@@ -10,7 +10,7 @@ $count = (int) ($alertsCount ?? 0);
     <button type="button" class="btn btn--outline btn--icon" data-notifications-toggle aria-label="التنبيهات">
         <?= icon('bell') ?>
         <?php if ($count > 0): ?>
-            <span class="badge badge--danger" style="margin-inline-start:0.35rem"><?= e((string) $count) ?></span>
+            <span class="badge badge--danger ms-1"><?= e((string) $count) ?></span>
         <?php endif; ?>
     </button>
 

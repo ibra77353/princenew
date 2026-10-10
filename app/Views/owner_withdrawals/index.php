@@ -36,7 +36,7 @@
         <label for="w-to">إلى تاريخ</label>
         <input class="input" id="w-to" name="to" type="date" value="<?= e($filters['to']) ?>">
     </div>
-    <div class="field" style="align-self:end">
+    <div class="field self-end">
         <button type="submit" class="btn btn--outline"><?= icon('search') ?> تصفية</button>
     </div>
 </form>

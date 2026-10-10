@@ -6,7 +6,6 @@
  * @var array<int,array<string,mixed>> $recent
  * @var array<int,array<string,mixed>> $stockByPackage
  * @var array<string,mixed> $settings
- * @var array<string,int> $counts
  */
 $threshold = (int) ($settings['low_stock_threshold'] ?? 10);
 
@@ -76,8 +75,8 @@ $cards = [
         <?php else: ?>
             <div class="stack stack--sm">
                 <?php foreach ($recent as $item): ?>
-                    <div class="row row--between" style="border-bottom:1px solid var(--border); padding-bottom:0.5rem">
-                        <div style="min-width:0">
+                    <div class="list-row">
+                        <div class="grow">
                             <p class="text-sm text-bold truncate"><?= e($item['label']) ?></p>
                             <p class="text-xs text-muted">
                                 <?= e(fdatetime($item['date'])) ?><?= $item['distributor'] ? ' • ' . e($item['distributor']) : '' ?>
@@ -102,9 +101,9 @@ $cards = [
         <?php else: ?>
             <div class="stack stack--sm">
                 <?php foreach ($stockByPackage as $row): ?>
-                    <div class="row row--between" style="border-bottom:1px solid var(--border); padding-bottom:0.5rem">
+                    <div class="list-row">
                         <div class="row">
-                            <span style="width:0.6rem;height:0.6rem;border-radius:999px;background:<?= e($row['color'] ?: '#2563eb') ?>"></span>
+                            <span class="dot dot--sm" style="--dot:<?= e($row['color'] ?: '#2563eb') ?>"></span>
                             <span class="text-sm"><?= e($row['name']) ?></span>
                         </div>
                         <div class="row">
@@ -118,23 +117,4 @@ $cards = [
             </div>
         <?php endif; ?>
     </section>
-</div>
-
-<div class="grid grid--cards mt-4">
-    <a class="card card--pad" href="<?= e(url('/sales')) ?>">
-        <p class="text-sm text-bold"><?= icon('cart') ?> المبيعات</p>
-        <p class="text-xs text-muted mt-1"><?= e((string) $counts['sales']) ?> فاتورة مسجّلة</p>
-    </a>
-    <a class="card card--pad" href="<?= e(url('/collections')) ?>">
-        <p class="text-sm text-bold"><?= icon('coins') ?> التحصيلات</p>
-        <p class="text-xs text-muted mt-1"><?= e((string) $counts['collections']) ?> عملية تحصيل</p>
-    </a>
-    <a class="card card--pad" href="<?= e(url('/lines')) ?>">
-        <p class="text-sm text-bold"><?= icon('wifi') ?> الخطوط</p>
-        <p class="text-xs text-muted mt-1"><?= e((string) $counts['lines']) ?> خط مسجّل</p>
-    </a>
-    <a class="card card--pad" href="<?= e(url('/expenses')) ?>">
-        <p class="text-sm text-bold"><?= icon('receipt') ?> المصروفات</p>
-        <p class="text-xs text-muted mt-1"><?= e((string) $counts['expenses']) ?> مصروف مسجّل</p>
-    </a>
 </div>

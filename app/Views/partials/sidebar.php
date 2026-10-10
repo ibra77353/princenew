@@ -44,7 +44,7 @@ $nav = [
     <div class="sidebar__footer">
         <div class="sidebar__user">
             <?= e($currentUser['name'] ?? '') ?><br>
-            <span style="opacity:0.7"><?= e($currentUser['email'] ?? '') ?></span>
+            <span class="opacity-70"><?= e($currentUser['email'] ?? '') ?></span>
         </div>
         <button type="button" class="btn btn--ghost btn--on-dark btn--block" data-theme-toggle>
             <span data-theme-icon>☾</span>

@@ -56,11 +56,11 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
             </div>
         </div>
     <?php else: ?>
-        <div class="grid grid--cards grid--single">
+        <div class="grid grid--cards">
             <?php foreach ($summary as $row): ?>
                 <div class="card card--pad">
                     <div class="row">
-                        <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($row['color'] ?: '#2563eb') ?>"></span>
+                        <span class="dot" style="--dot:<?= e($row['color'] ?: '#2563eb') ?>"></span>
                         <h3 class="text-lg"><?= e($row['name']) ?></h3>
                     </div>
 
@@ -68,15 +68,15 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                     <p class="text-xs text-muted">الشدات المتبقية</p>
 
                     <div class="grid grid--auto mt-3 text-center text-xs">
-                        <div style="padding:0.4rem;border-radius:var(--radius-sm);background:color-mix(in srgb, var(--tone-green) 10%, transparent)">
+                        <div class="mini-stat mini-stat--green">
                             <p class="text-bold text-success"><?= e((string) $row['added']) ?></p>
                             <p class="text-muted">مضاف</p>
                         </div>
-                        <div style="padding:0.4rem;border-radius:var(--radius-sm);background:color-mix(in srgb, var(--tone-red) 10%, transparent)">
+                        <div class="mini-stat mini-stat--red">
                             <p class="text-bold text-danger"><?= e((string) $row['sold']) ?></p>
                             <p class="text-muted">مباع</p>
                         </div>
-                        <div style="padding:0.4rem;border-radius:var(--radius-sm);background:var(--primary-soft)">
+                        <div class="mini-stat mini-stat--primary">
                             <p class="text-bold"><?= e((string) $row['returned']) ?></p>
                             <p class="text-muted">مرتجع</p>
                         </div>

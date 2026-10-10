@@ -301,6 +301,59 @@ table { border-collapse: collapse; width: 100%; }
 .tone-amber { background: color-mix(in srgb, var(--tone-amber) 14%, transparent); color: var(--tone-amber); }
 .tone-purple { background: color-mix(in srgb, var(--tone-purple) 12%, transparent); color: var(--tone-purple); }
 
+/* ── عناصر مشتركة بين الصفحات ────────────────────────────────────────────── */
+/* نقطة لونية للباقات والخطوط: يُمرَّر اللون عبر المتغيّر --dot */
+.dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 999px;
+    background: var(--dot, var(--primary));
+    flex: 0 0 auto;
+}
+
+.dot--sm { width: 0.6rem; height: 0.6rem; }
+
+/* مربّع أيقونة بخلفية أساسية (ترويسة الفاتورة) */
+.icon-box {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-sm);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+.icon-box svg { width: 1.15rem; height: 1.15rem; }
+
+/* بطاقة بشريط لوني أعلى: يُمرَّر لون الباقة عبر المتغيّر --accent */
+.card-accent { border-top: 4px solid var(--accent, var(--primary)); }
+
+/* بطاقة بعرض قراءة مريح (الملخّصات والنماذج والعروض) */
+.card--narrow { max-width: 44rem; margin-inline: auto; }
+
+/* صف داخل قائمة: الخط الفاصل بين الصفوف فقط دون الأخير */
+.list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.list-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+/* مربّع إحصاء صغير داخل بطاقات المخزون */
+.mini-stat { padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); background: var(--muted); }
+.mini-stat--green { background: color-mix(in srgb, var(--tone-green) 10%, transparent); }
+.mini-stat--red { background: color-mix(in srgb, var(--tone-red) 10%, transparent); }
+.mini-stat--primary { background: var(--primary-soft); }
+
+/* قائمة نقطية (ملاحظات الإعدادات) */
+.bullets { margin: 0; padding-inline-start: 1.1rem; }
+
 /* ── الأدوات (Utilities) ─────────────────────────────────────────────────── */
 .row { display: flex; align-items: center; gap: 0.5rem; }
 .row--between { justify-content: space-between; }
@@ -329,6 +382,11 @@ table { border-collapse: collapse; width: 100%; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .divider { height: 1px; background: var(--border); border: 0; margin: 0.75rem 0; }
 .big-number { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; }
+.m-0 { margin: 0; }
+.self-end { align-self: end; }
+.ms-1 { margin-inline-start: 0.35rem; }
+.opacity-70 { opacity: 0.7; }
+.grow { flex: 1 1 auto; min-width: 0; }
 
 /* ── الأزرار ─────────────────────────────────────────────────────────────── */
 .btn {
@@ -645,8 +703,8 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 
 /* ── النوافذ المنبثقة على الجوال: ورقة سفلية كما في مرجع التصميم ──────── */
 @media (max-width: 639px) {
-    /* على الجوال: عمود واحد (بطاقات الباقات وأمثالها) */
-    .grid--single { grid-template-columns: minmax(0, 1fr); }
+    /* على الجوال: عمود واحد لبطاقات القوائم (الباقات، المخزون، الخطوط) */
+    .grid--cards { grid-template-columns: minmax(0, 1fr); }
     /* نموذج البيع: أزرار الإجراءات بعرض كامل أسفل النموذج */
     .sale-actions { flex-direction: column-reverse; align-items: stretch; }
     .modal { align-items: flex-end; padding: 0; }

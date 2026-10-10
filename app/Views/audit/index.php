@@ -51,7 +51,7 @@ $actions = [
             <?php endforeach; ?>
         </select>
     </div>
-    <div class="field" style="align-self:end">
+    <div class="field self-end">
         <button type="submit" class="btn btn--outline"><?= icon('search') ?> تصفية</button>
     </div>
 </form>
@@ -69,7 +69,7 @@ $actions = [
         <?php foreach ($logs as $log): ?>
             <div class="timeline__item">
                 <span class="timeline__dot"></span>
-                <div style="min-width:0; flex:1">
+                <div class="grow">
                     <div class="row row--between row--wrap">
                         <p class="text-sm text-bold">
                             <?= e($actions[$log['action']] ?? $log['action']) ?>

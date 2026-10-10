@@ -13,7 +13,7 @@
             <?= icon('menu') ?>
         </button>
         <div class="brand-inline">
-            <span style="color: var(--primary)"><?= icon('network') ?></span>
+            <span class="text-primary"><?= icon('network') ?></span>
             <span><?= e($settings['network_name'] ?? 'شبكة البرنس') ?></span>
         </div>
     </div>

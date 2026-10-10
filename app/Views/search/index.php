@@ -32,7 +32,7 @@ foreach ($results as $rows) {
         <label for="s-term">كلمة البحث</label>
         <input class="input" id="s-term" name="q" type="search" value="<?= e($term) ?>" placeholder="اسم موزع، رقم فاتورة، وصف مصروف..." autofocus>
     </div>
-    <div class="field" style="align-self:end">
+    <div class="field self-end">
         <button type="submit" class="btn btn--primary"><?= icon('search') ?> بحث</button>
     </div>
 </form>

@@ -19,7 +19,7 @@
         <label for="d-q">بحث بالاسم أو الهاتف</label>
         <input class="input" id="d-q" name="q" type="search" value="<?= e($term) ?>" placeholder="اكتب للبحث...">
     </div>
-    <div class="field" style="align-self:end">
+    <div class="field self-end">
         <button type="submit" class="btn btn--outline"><?= icon('search') ?> بحث</button>
     </div>
 </form>

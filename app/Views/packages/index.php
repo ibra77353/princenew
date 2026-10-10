@@ -24,12 +24,12 @@
         </div>
     </div>
 <?php else: ?>
-    <div class="grid grid--cards grid--single">
+    <div class="grid grid--cards">
         <?php foreach ($packages as $package): ?>
-            <div class="card card--pad" style="border-top:4px solid <?= e($package['color']) ?>">
+            <div class="card card--pad card-accent" style="--accent:<?= e($package['color']) ?>">
                 <div class="row row--between">
                     <div class="row">
-                        <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($package['color']) ?>"></span>
+                        <span class="dot" style="--dot:<?= e($package['color']) ?>"></span>
                         <h3 class="text-lg"><?= e($package['name']) ?></h3>
                     </div>
                     <span class="badge <?= $package['status'] === 'active' ? 'badge--success' : 'badge--danger' ?>">

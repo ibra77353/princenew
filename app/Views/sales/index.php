@@ -57,7 +57,7 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
             <option value="cancelled" <?= $filters['status'] === 'cancelled' ? 'selected' : '' ?>>ملغاة</option>
         </select>
     </div>
-    <div class="field" style="align-self:end">
+    <div class="field self-end">
         <button type="submit" class="btn btn--outline"><?= icon('search') ?> تصفية</button>
     </div>
 </form>

@@ -66,7 +66,7 @@ $currency = $settings['currency_symbol'] ?? 'ر.ي';
         <hr class="divider">
 
         <div class="row row--between">
-            <h3 class="section-title" style="margin:0"><?= icon('package') ?> إضافة عنصر</h3>
+            <h3 class="section-title m-0"><?= icon('package') ?> إضافة عنصر</h3>
             <button type="button" class="btn btn--primary btn--sm" data-add-row><?= icon('plus') ?> إضافة للقائمة</button>
         </div>
 

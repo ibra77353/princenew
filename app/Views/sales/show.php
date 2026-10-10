@@ -29,7 +29,7 @@ $isPaid = (float) $remaining <= 0;
 <div class="invoice print-area" data-invoice>
     <div class="invoice__head">
         <div class="row">
-            <div class="sidebar__logo" style="background:var(--primary)"><?= icon('network') ?></div>
+            <div class="icon-box"><?= icon('network') ?></div>
             <div>
                 <h2><?= e($settings['network_name'] ?? 'شبكة البرنس') ?></h2>
                 <p class="text-xs text-muted">نظام إدارة شبكة الإنترنت</p>
@@ -38,7 +38,7 @@ $isPaid = (float) $remaining <= 0;
         <div class="text-end">
             <p class="text-bold">فاتورة <?= e($sale['invoice_number']) ?></p>
             <p class="text-xs text-muted"><?= e(fdatetime($sale['sale_date'])) ?></p>
-            <div class="row" style="justify-content:flex-end">
+            <div class="row row--end">
                 <span class="badge <?= $isActive ? 'badge--success' : 'badge--danger' ?>">
                     <?= $isActive ? 'نشطة' : 'ملغاة' ?>
                 </span>
@@ -139,7 +139,7 @@ $isPaid = (float) $remaining <= 0;
 </div>
 
 <?php if ($isActive): ?>
-    <div class="card card--pad mt-4 no-print" style="max-width:44rem;margin-inline:auto">
+    <div class="card card--pad card--narrow mt-4 no-print">
         <h3 class="section-title"><?= icon('alert') ?> إلغاء الفاتورة</h3>
         <p class="text-sm text-muted mb-2">
             الإلغاء يُرجع الكميات إلى المخزون ويعكس المدفوعات والتحصيلات المرتبطة،

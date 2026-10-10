@@ -108,7 +108,7 @@ $value = static fn (string $key, mixed $default = ''): mixed => $row[$key] ?? $s
 
         <section class="card card--pad">
             <h3 class="section-title"><?= icon('alert') ?> ملاحظات أمنية</h3>
-            <ul class="text-sm text-muted" style="margin:0; padding-inline-start:1.1rem">
+            <ul class="text-sm text-muted bullets">
                 <li>كلمات المرور محفوظة بتشفير <code>password_hash()</code> ولا تُخزَّن كنص صريح.</li>
                 <li>لا توجد بيانات دخول افتراضية في المستودع؛ يُنشئ المدير الأول عبر شاشة الإعداد.</li>
                 <li>جميع الطلبات التي تغيّر البيانات محمية برمز CSRF.</li>

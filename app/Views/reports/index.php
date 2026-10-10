@@ -66,7 +66,7 @@ $cash = $report['cash'];
             <?php endforeach; ?>
         </select>
     </div>
-    <div class="field" style="align-self:end">
+    <div class="field self-end">
         <button type="submit" class="btn btn--primary"><?= icon('chart') ?> عرض التقرير</button>
     </div>
 </form>
