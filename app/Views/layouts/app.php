@@ -44,6 +44,7 @@ $alertsCount = count($alerts['lowStock']) + count($alerts['indebted']);
     </div>
 
     <?php \App\Services\Core\View::partial('partials/mobilebar'); ?>
+    <?php \App\Services\Core\View::partial('partials/confirm'); ?>
 
     <script src="<?= e(asset('js/app.js')) ?>" defer></script>
 </body>

@@ -431,7 +431,8 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 
 /* ── الحالات الفارغة والتحميل ────────────────────────────────────────────── */
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; }
-.empty-state__icon { width: 3rem; height: 3rem; border-radius: 999px; background: var(--muted); color: var(--muted-foreground); display: grid; place-items: center; font-size: 1.4rem; font-weight: 700; }
+.empty-state__icon { width: 4rem; height: 4rem; border-radius: 999px; background: var(--muted); color: var(--muted-foreground); display: grid; place-items: center; font-size: 1.4rem; font-weight: 700; }
+.empty-state__icon svg { width: 2rem; height: 2rem; }
 .empty-state h2 { font-size: 1.05rem; }
 .empty-state p { color: var(--muted-foreground); font-size: 0.85rem; }
 
@@ -466,6 +467,8 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 .modal__body { padding: 1.25rem; }
 .modal__close { background: transparent; border: 0; cursor: pointer; color: var(--muted-foreground); font-size: 1.35rem; line-height: 1; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); }
 .modal__close:hover { background: var(--accent); }
+.modal__panel--confirm { max-width: 26rem; }
+.confirm__actions { display: flex; gap: 0.5rem; justify-content: flex-end; padding-top: 1.25rem; }
 
 /* ── الترقيم ────────────────────────────────────────────────────────────── */
 .pagination { display: flex; align-items: center; justify-content: center; gap: 0.35rem; margin-top: 1.25rem; flex-wrap: wrap; }
@@ -548,20 +551,54 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 
 /* ── الجوال ────────────────────────────────────────────────────────────── */
 @media (max-width: 1023px) {
-    .sidebar { transform: translateX(100%); box-shadow: var(--shadow-lg); }
+    .sidebar { width: 18rem; transform: translateX(100%); box-shadow: var(--shadow-lg); }
     .sidebar.is-open { transform: none; }
     .main { padding-inline-start: 0; }
     .content { padding: 1rem 0.9rem 5.5rem; }
-    .topbar { padding: 0.6rem 0.9rem; }
+    .topbar { padding: 0.6rem 0.9rem; padding-top: calc(0.6rem + env(safe-area-inset-top)); }
+    .page-header h1 { font-size: 1.15rem; }
     .menu-toggle { display: inline-flex; }
     .mobilebar { display: block; }
     .grid--two, .grid--form { grid-template-columns: minmax(0, 1fr); }
     .filters .field--wide { grid-column: auto; }
 }
 
+/* منع تحديد النص على عناصر التنقّل (كما في مرجع التصميم) */
+.topbar, .mobilebar { -webkit-user-select: none; user-select: none; }
+
+/* ── النوافذ المنبثقة على الجوال: ورقة سفلية كما في مرجع التصميم ──────── */
+@media (max-width: 639px) {
+    .modal { align-items: flex-end; padding: 0; }
+    .modal__panel {
+        max-width: none;
+        max-height: 92vh;
+        border-radius: 1rem 1rem 0 0;
+        padding-bottom: env(safe-area-inset-bottom);
+        animation: sheet-in 0.22s ease-out;
+    }
+    .modal__panel::before {
+        content: "";
+        display: block;
+        width: 2.5rem;
+        height: 0.25rem;
+        margin: 0.6rem auto 0;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+    }
+    .modal__head { position: sticky; top: 0; z-index: 2; background: var(--popover); }
+    .modal .btn { min-height: 2.75rem; }
+    .modal .form-actions, .confirm__actions { flex-direction: column-reverse; align-items: stretch; }
+}
+
+@keyframes sheet-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
 @media (min-width: 640px) {
     .grid--stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .grid--cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .page-header h1 { font-size: 1.5rem; }
+    .stat { padding: 1.25rem; }
+    .stat__title { font-size: 0.875rem; }
+    .stat__value { font-size: 1.5rem; }
 }
 
 @media (min-width: 1024px) {

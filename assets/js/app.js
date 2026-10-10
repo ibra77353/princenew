@@ -167,18 +167,71 @@
         }
     });
 
-    /* ── تأكيد العمليات الحساسة ───────────────────────────────────────── */
+    /* ── تأكيد العمليات الحساسة (ورقة سفلية على الجوال) ──────────────── */
+    var confirmDialog = document.getElementById("confirm-dialog");
+    var confirmMessage = confirmDialog ? confirmDialog.querySelector("[data-confirm-message]") : null;
+    var confirmAccept = confirmDialog ? confirmDialog.querySelector("[data-confirm-accept]") : null;
+    var confirmTrigger = null;
+
+    function closeConfirm() {
+        if (confirmDialog) {
+            confirmDialog.hidden = true;
+        }
+        confirmTrigger = null;
+    }
+
     document.addEventListener("click", function (event) {
+        if (event.target.closest("[data-confirm-cancel]")) {
+            event.preventDefault();
+            closeConfirm();
+            return;
+        }
+
         var trigger = event.target.closest("[data-confirm]");
         if (!trigger) {
             return;
         }
+
         var message = trigger.getAttribute("data-confirm") || "هل أنت متأكد من تنفيذ هذه العملية؟";
-        if (!window.confirm(message)) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
+
+        // مُؤكَّد من المستخدم → يُنفَّذ الإجراء الأصلي كما هو.
+        if (trigger.hasAttribute("data-confirmed")) {
+            trigger.removeAttribute("data-confirmed");
+            return;
+        }
+
+        if (!confirmDialog) {
+            // احتياطي حين لا تتوفر النافذة (صفحات بلا تخطيط عام).
+            if (!window.confirm(message)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        confirmTrigger = trigger;
+        if (confirmMessage) {
+            confirmMessage.textContent = message;
+        }
+        confirmDialog.hidden = false;
+        if (confirmAccept) {
+            confirmAccept.focus();
         }
     });
+
+    if (confirmAccept) {
+        confirmAccept.addEventListener("click", function () {
+            var trigger = confirmTrigger;
+            closeConfirm();
+            if (!trigger) {
+                return;
+            }
+            trigger.setAttribute("data-confirmed", "");
+            trigger.click();
+        });
+    }
 
     /* ── البحث التلقائي بعد توقف الكتابة ──────────────────────────────── */
     document.querySelectorAll("[data-autosubmit]").forEach(function (input) {

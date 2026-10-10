@@ -4,9 +4,9 @@
  */
 $items = [
     ['/', 'الرئيسية', 'dashboard'],
+    ['/packages', 'الباقات', 'package'],
     ['/sales', 'المبيعات', 'cart'],
-    ['/inventory', 'المخزون', 'boxes'],
-    ['/collections', 'التحصيلات', 'coins'],
+    ['/cash', 'الصندوق', 'chart'],
     ['/search', 'البحث', 'search'],
 ];
 ?>
