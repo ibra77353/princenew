@@ -38,7 +38,8 @@
     --shadow: 0 4px 16px hsl(222 47% 11% / 0.07);
     --shadow-lg: 0 18px 48px hsl(222 47% 11% / 0.18);
     --font-body: "Cairo", "Segoe UI", Tahoma, sans-serif;
-    --sidebar-width: 16rem;
+    --sidebar-min-width: 12rem;
+    --sidebar-max-width: 18rem;
     --header-height: 4rem;
 
     --tone-primary: hsl(221 83% 53%);
@@ -101,14 +102,18 @@ table { border-collapse: collapse; width: 100%; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* ── تخطيط التطبيق ───────────────────────────────────────────────────────── */
-.app { min-height: 100vh; }
+.app { min-height: 100vh; display: flex; }
 
 .sidebar {
-    position: fixed;
-    inset-block: 0;
-    /* في RTL يكون inline-start هو الحافة اليمنى، وهي الجهة التي تثبت فيها القائمة (كما في مرجع التصميم). */
-    inset-inline-start: 0;
-    width: var(--sidebar-width);
+    /* عرض تلقائي بحسب أطول نص داخل القائمة، مقيَّد بين 12rem و18rem.
+       تبقى القائمة داخل التخطيط (sticky) حتى يتبع المحتوى الرئيسي عرضها الفعلي دون فراغ أو تداخل. */
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    flex: 0 0 auto;
+    width: max-content;
+    min-width: var(--sidebar-min-width);
+    max-width: var(--sidebar-max-width);
     background: var(--sidebar-background);
     color: var(--sidebar-foreground);
     border-inline-end: 1px solid var(--sidebar-border);
@@ -182,7 +187,9 @@ table { border-collapse: collapse; width: 100%; }
 }
 
 .main {
-    padding-inline-start: var(--sidebar-width);
+    /* يملأ المساحة المتبقية بعد القائمة الجانبية أيًّا كان عرضها */
+    flex: 1 1 auto;
+    min-width: 0;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -552,9 +559,18 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 
 /* ── الجوال ────────────────────────────────────────────────────────────── */
 @media (max-width: 1023px) {
-    .sidebar { width: 18rem; transform: translateX(100%); box-shadow: var(--shadow-lg); }
+    /* على الجوال تعود القائمة إلى وضع الدرج المنزلق من الحافة اليمنى (خارج التخطيط) */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        height: auto;
+        inset-inline-start: 0;
+        width: var(--sidebar-max-width);
+        transform: translateX(100%);
+        box-shadow: var(--shadow-lg);
+    }
     .sidebar.is-open { transform: none; }
-    .main { padding-inline-start: 0; }
     .content { padding: 1rem 0.9rem 5.5rem; }
     .topbar { padding: 0.6rem 0.9rem; padding-top: calc(0.6rem + env(safe-area-inset-top)); }
     .page-header h1 { font-size: 1.15rem; }
