@@ -106,11 +106,12 @@ table { border-collapse: collapse; width: 100%; }
 .sidebar {
     position: fixed;
     inset-block: 0;
-    inset-inline-end: 0;
+    /* في RTL يكون inline-start هو الحافة اليمنى، وهي الجهة التي تثبت فيها القائمة (كما في مرجع التصميم). */
+    inset-inline-start: 0;
     width: var(--sidebar-width);
     background: var(--sidebar-background);
     color: var(--sidebar-foreground);
-    border-inline-start: 1px solid var(--sidebar-border);
+    border-inline-end: 1px solid var(--sidebar-border);
     display: flex;
     flex-direction: column;
     z-index: 40;
