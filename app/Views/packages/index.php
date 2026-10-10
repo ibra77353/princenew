@@ -30,16 +30,21 @@
             <div class="card card--pad" style="border-top:4px solid <?= e($package['color']) ?>">
                 <div class="row row--between">
                     <div class="row">
-                        <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($package['color']) ?>"></span>
                         <h3 class="text-lg"><?= e($package['name']) ?></h3>
+                        <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($package['color']) ?>"></span>
                     </div>
                     <span class="badge <?= $package['status'] === 'active' ? 'badge--success' : 'badge--danger' ?>">
-                        <?= $package['status'] === 'active' ? 'مفعّلة' : 'معطّلة' ?>
+                        <?= $package['status'] === 'active' ? 'نشطة' : 'معطّلة' ?>
                     </span>
                 </div>
 
                 <p class="big-number text-primary mt-2"><?= e(money($package['price'])) ?></p>
                 <p class="text-xs text-muted">سعر الشدة</p>
+
+                <div class="row row--wrap mt-2">
+                    <span class="badge">MB <?= e((string) (int) $package['data_mb']) ?></span>
+                    <span class="badge"><?= e((string) (int) $package['hours']) ?> ساعة</span>
+                </div>
 
                 <div class="grid grid--auto mt-3 text-center text-xs">
                     <div class="card card--pad" style="padding:0.5rem">

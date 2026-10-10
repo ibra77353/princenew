@@ -60,12 +60,12 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
             <?php foreach ($summary as $row): ?>
                 <div class="card card--pad">
                     <div class="row">
-                        <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($row['color'] ?: '#2563eb') ?>"></span>
                         <h3 class="text-lg"><?= e($row['name']) ?></h3>
+                        <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($row['color'] ?: '#2563eb') ?>"></span>
                     </div>
 
                     <p class="big-number text-primary mt-2"><?= e((string) $row['current']) ?></p>
-                    <p class="text-xs text-muted">الشَدات المتبقية</p>
+                    <p class="text-xs text-muted">الشدات المتبقية</p>
 
                     <div class="grid grid--auto mt-3 text-center text-xs">
                         <div style="padding:0.4rem;border-radius:var(--radius-sm);background:color-mix(in srgb, var(--tone-green) 10%, transparent)">
@@ -94,7 +94,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                     <button type="button" class="btn btn--outline btn--sm btn--block mt-2"
                             data-fill="inventory-adjust"
                             data-values='<?= e(json_encode(['package_id' => (int) $row['package_id'], 'target_quantity' => (int) $row['current']], JSON_UNESCAPED_UNICODE)) ?>'>
-                        <?= icon('edit') ?> تعديل الكمية
+                        <?= icon('edit') ?> تعديل
                     </button>
                 </div>
             <?php endforeach; ?>

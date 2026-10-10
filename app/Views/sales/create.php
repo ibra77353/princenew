@@ -17,7 +17,7 @@ $currency = $settings['currency_symbol'] ?? 'ر.ي';
         <h1>عملية بيع جديدة</h1>
         <p>تُحسب الأسعار والإجماليات على الخادم، ويُتحقق من المخزون قبل الحفظ.</p>
     </div>
-    <a class="btn btn--outline" href="<?= e(url('/sales')) ?>">رجوع للمبيعات</a>
+    <a class="btn btn--outline btn--icon" href="<?= e(url('/sales')) ?>" aria-label="رجوع للمبيعات"><?= icon('x') ?></a>
 </div>
 
 <?php if ($distributors === [] || $packages === []): ?>
@@ -67,7 +67,7 @@ $currency = $settings['currency_symbol'] ?? 'ر.ي';
 
         <div class="row row--between">
             <h3 class="section-title" style="margin:0"><?= icon('package') ?> إضافة عنصر</h3>
-            <button type="button" class="btn btn--outline btn--sm" data-add-row><?= icon('plus') ?> إضافة سطر</button>
+            <button type="button" class="btn btn--primary btn--sm" data-add-row><?= icon('plus') ?> إضافة للقائمة</button>
         </div>
 
         <div class="sale-list" data-sale-items>
@@ -144,7 +144,7 @@ $currency = $settings['currency_symbol'] ?? 'ر.ي';
                 <p class="sale-summary__value sale-summary__value--total"><span data-sale-total>0</span> <?= e($currency) ?></p>
             </div>
             <div class="text-end">
-                <span class="sale-row__label">المتبقي بعد الدفع</span>
+                <span class="sale-row__label">المتبقي</span>
                 <p class="sale-summary__value sale-summary__value--remaining"><span data-sale-remaining>0</span> <?= e($currency) ?></p>
             </div>
         </div>
