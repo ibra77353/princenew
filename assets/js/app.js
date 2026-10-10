@@ -387,6 +387,27 @@
             return;
         }
 
+        var shareButton = event.target.closest("[data-share]");
+        if (shareButton) {
+            event.preventDefault();
+            var shared = document.querySelector("[data-invoice]");
+            var shareText = shared ? shared.innerText.replace(/\n{2,}/g, "\n").trim() : "";
+            if (navigator.share) {
+                navigator.share({ title: document.title, text: shareText }).catch(function () {});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareText).then(function () {
+                    var label = shareButton.querySelector("[data-share-label]");
+                    if (!label) {
+                        return;
+                    }
+                    var original = label.textContent;
+                    label.textContent = "تم النسخ";
+                    setTimeout(function () { label.textContent = original; }, 1500);
+                }).catch(function () {});
+            }
+            return;
+        }
+
         var shareTrigger = event.target.closest("[data-whatsapp]");
         if (shareTrigger) {
             event.preventDefault();

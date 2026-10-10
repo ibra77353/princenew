@@ -19,26 +19,26 @@
         </p>
     </div>
     <div class="btn-group">
-        <a class="btn btn--outline" href="<?= e(url('/distributors')) ?>">رجوع للموزعين</a>
+        <a class="btn btn--outline" href="<?= e(url('/distributors')) ?>">رجوع</a>
         <a class="btn btn--primary" href="<?= e(url('/collections')) ?>"><?= icon('coins') ?> تسجيل تحصيل</a>
     </div>
 </div>
 
 <div class="grid grid--stats mb-4">
     <div class="stat">
-        <span class="stat__title">إجمالي المبيعات النشطة</span>
-        <span class="stat__value"><?= e(money($activeSalesTotal)) ?></span>
+        <span class="stat__title">إجمالي المبيعات</span>
+        <span class="stat__value text-primary"><?= e(money($activeSalesTotal)) ?></span>
+    </div>
+    <div class="stat">
+        <span class="stat__title">إجمالي التحصيلات</span>
+        <span class="stat__value text-success"><?= e(money($validCollections)) ?></span>
     </div>
     <div class="stat">
         <span class="stat__title">المدفوع عند البيع</span>
         <span class="stat__value"><?= e(money($paidAtSale)) ?></span>
     </div>
     <div class="stat">
-        <span class="stat__title">التحصيلات الصالحة</span>
-        <span class="stat__value text-success"><?= e(money($validCollections)) ?></span>
-    </div>
-    <div class="stat">
-        <span class="stat__title">الرصيد المتبقي</span>
+        <span class="stat__title">الرصيد المستحق</span>
         <span class="stat__value <?= $balance > 0 ? 'text-danger' : 'text-success' ?>"><?= e(money($balance)) ?></span>
     </div>
 </div>
@@ -48,12 +48,12 @@
 <?php endif; ?>
 
 <section class="mb-4">
-    <h3 class="section-title"><?= icon('cart') ?> فواتير الموزع</h3>
+    <h3 class="section-title"><?= icon('cart') ?> سجل المبيعات</h3>
     <?php if ($sales === []): ?>
         <div class="card card--pad">
             <div class="empty-state">
                 <div class="empty-state__icon"><?= icon('cart') ?></div>
-                <p>لا توجد فواتير لهذا الموزع.</p>
+                <p>لا توجد مبيعات.</p>
                 <a class="btn btn--primary" href="<?= e(url('/sales/create')) ?>">إنشاء فاتورة</a>
             </div>
         </div>
@@ -97,12 +97,12 @@
 </section>
 
 <section>
-    <h3 class="section-title"><?= icon('coins') ?> تحصيلات الموزع</h3>
+    <h3 class="section-title"><?= icon('coins') ?> سجل التحصيلات</h3>
     <?php if ($collections === []): ?>
         <div class="card card--pad">
             <div class="empty-state">
                 <div class="empty-state__icon"><?= icon('coins') ?></div>
-                <p>لا توجد تحصيلات مسجّلة.</p>
+                <p>لا توجد تحصيلات.</p>
             </div>
         </div>
     <?php else: ?>

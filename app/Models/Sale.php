@@ -92,7 +92,8 @@ final class Sale extends Model
         [$where, $params] = $this->buildFilters($filters);
 
         return Database::all(
-            'SELECT s.*, d.name AS distributor_name
+            'SELECT s.*, d.name AS distributor_name,
+                    (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS items_count
              FROM sales s LEFT JOIN distributors d ON d.id = s.distributor_id
              WHERE ' . $where . '
              ORDER BY s.sale_date DESC, s.id DESC

@@ -8,8 +8,8 @@
 ?>
 <div class="page-header">
     <div>
-        <h1>الباقات</h1>
-        <p>سعر الباقة هو سعر بيع الشدة. تعطيل الباقة لا يحذف تاريخ مبيعاتها.</p>
+        <h1>إدارة الباقات</h1>
+        <p>إضافة وتعديل وتعطيل الباقات. سعر الباقة هو سعر بيع الشدة.</p>
     </div>
     <button type="button" class="btn btn--primary" data-modal-open="package-create"><?= icon('plus') ?> باقة جديدة</button>
 </div>
@@ -26,12 +26,11 @@
 <?php else: ?>
     <div class="grid grid--cards grid--single">
         <?php foreach ($packages as $package): ?>
-            <?php $row = $stock[(int) $package['id']] ?? ['current' => 0, 'value' => 0, 'added' => 0, 'sold' => 0, 'returned' => 0, 'adjust_net' => 0]; ?>
             <div class="card card--pad" style="border-top:4px solid <?= e($package['color']) ?>">
                 <div class="row row--between">
                     <div class="row">
-                        <h3 class="text-lg"><?= e($package['name']) ?></h3>
                         <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($package['color']) ?>"></span>
+                        <h3 class="text-lg"><?= e($package['name']) ?></h3>
                     </div>
                     <span class="badge <?= $package['status'] === 'active' ? 'badge--success' : 'badge--danger' ?>">
                         <?= $package['status'] === 'active' ? 'نشطة' : 'معطّلة' ?>
@@ -42,39 +41,9 @@
                 <p class="text-xs text-muted">سعر الشدة</p>
 
                 <div class="row row--wrap mt-2">
-                    <span class="badge">MB <?= e((string) (int) $package['data_mb']) ?></span>
                     <span class="badge"><?= e((string) (int) $package['hours']) ?> ساعة</span>
+                    <span class="badge">MB <?= e((string) (int) $package['data_mb']) ?></span>
                 </div>
-
-                <div class="grid grid--auto mt-3 text-center text-xs">
-                    <div class="card card--pad" style="padding:0.5rem">
-                        <p class="text-bold text-success"><?= e((string) $row['added']) ?></p>
-                        <p class="text-muted">مضاف</p>
-                    </div>
-                    <div class="card card--pad" style="padding:0.5rem">
-                        <p class="text-bold text-danger"><?= e((string) $row['sold']) ?></p>
-                        <p class="text-muted">مباع</p>
-                    </div>
-                    <div class="card card--pad" style="padding:0.5rem">
-                        <p class="text-bold"><?= e((string) $row['returned']) ?></p>
-                        <p class="text-muted">مرتجع</p>
-                    </div>
-                </div>
-
-                <div class="row row--between mt-3">
-                    <span class="text-xs text-muted">المخزون الحالي</span>
-                    <span class="badge <?= (int) $row['current'] <= $threshold ? 'badge--danger' : 'badge--success' ?>">
-                        <?= e((string) $row['current']) ?> شدة
-                    </span>
-                </div>
-                <div class="row row--between mt-1">
-                    <span class="text-xs text-muted">قيمة المخزون</span>
-                    <span class="text-xs text-bold"><?= e(money($row['value'])) ?></span>
-                </div>
-
-                <?php if (!empty($package['description'])): ?>
-                    <p class="text-xs text-muted mt-1"><?= e($package['description']) ?></p>
-                <?php endif; ?>
 
                 <div class="btn-group mt-3">
                     <button type="button" class="btn btn--outline btn--sm" data-fill="package-edit"

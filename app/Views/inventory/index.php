@@ -13,7 +13,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
 <div class="page-header">
     <div>
         <h1>إدارة المخزون</h1>
-        <p>المخزون يُدار بالشدات. تُحفظ تكلفة كل إضافة وقت إنشائها ولا تتغيّر لاحقًا.</p>
+        <p>متابعة الكميات وحركة المخزون. تُحفظ تكلفة كل إضافة وقت إنشائها ولا تتغيّر لاحقًا.</p>
     </div>
     <div class="btn-group">
         <button type="button" class="btn btn--primary" data-modal-open="inventory-add"><?= icon('plus') ?> إضافة مخزون</button>
@@ -60,8 +60,8 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
             <?php foreach ($summary as $row): ?>
                 <div class="card card--pad">
                     <div class="row">
-                        <h3 class="text-lg"><?= e($row['name']) ?></h3>
                         <span style="width:0.75rem;height:0.75rem;border-radius:999px;background:<?= e($row['color'] ?: '#2563eb') ?>"></span>
+                        <h3 class="text-lg"><?= e($row['name']) ?></h3>
                     </div>
 
                     <p class="big-number text-primary mt-2"><?= e((string) $row['current']) ?></p>
@@ -171,12 +171,12 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                 </div>
                 <div class="grid grid--form">
                     <div class="field">
-                        <label for="inv-quantity">كمية الشدات</label>
-                        <input class="input" id="inv-quantity" name="quantity" type="number" min="1" step="1" required>
+                        <label for="inv-cost">سعر الشدة</label>
+                        <input class="input" id="inv-cost" name="unit_price" type="number" min="0" step="1" value="0" required>
                     </div>
                     <div class="field">
-                        <label for="inv-cost">تكلفة الشدة</label>
-                        <input class="input" id="inv-cost" name="unit_price" type="number" min="0" step="1" value="0" required>
+                        <label for="inv-quantity">كمية الشدات</label>
+                        <input class="input" id="inv-quantity" name="quantity" type="number" min="1" step="1" required>
                     </div>
                 </div>
                 <div class="field">
@@ -185,7 +185,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn--outline" data-modal-close>إلغاء</button>
-                    <button type="submit" class="btn btn--primary"><?= icon('save') ?> حفظ</button>
+                    <button type="submit" class="btn btn--primary"><?= icon('plus') ?> إضافة</button>
                 </div>
             </form>
         </div>

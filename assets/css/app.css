@@ -418,6 +418,19 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 .sale-summary__value--total { color: var(--primary); }
 .sale-summary__value--remaining { color: var(--tone-red); }
 
+/* ── قوائم السجلات كبطاقات (المبيعات والموزعون) ─────────────────────────── */
+.record-list { display: grid; gap: 0.75rem; }
+.record-list--auto { grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+.record { display: flex; flex-direction: column; gap: 0.3rem; }
+.record__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.record__id { font-size: 0.95rem; font-weight: 700; }
+.record__meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.2rem 0.65rem; margin-top: 0.15rem; font-size: 0.72rem; color: var(--muted-foreground); }
+.record__meta > span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.record__meta svg { width: 0.85rem; height: 0.85rem; }
+.record__foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.35rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
+.record__amount { font-size: 1.05rem; font-weight: 800; }
+.record__sub { display: block; font-size: 0.7rem; font-weight: 600; color: var(--muted-foreground); }
+
 /* ── الشارات والتنبيهات ──────────────────────────────────────────────────── */
 .badge {
     display: inline-flex;
@@ -534,6 +547,32 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 .invoice__totals { margin-top: 1rem; margin-inline-start: auto; width: min(100%, 18rem); display: flex; flex-direction: column; gap: 0.35rem; }
 .invoice__totals div { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.88rem; }
 .invoice__totals .grand { border-top: 1px solid var(--border); padding-top: 0.4rem; font-weight: 800; font-size: 1rem; }
+
+/* الفاتورة ورقة بيضاء دائمًا (كما في مرجع التصميم) حتى في الوضع الداكن */
+.invoice {
+    --card: #ffffff;
+    --card-foreground: #111827;
+    --foreground: #111827;
+    --muted: #f3f4f6;
+    --muted-foreground: #6b7280;
+    --border: #e5e7eb;
+    --popover: #ffffff;
+    color: #111827;
+    box-shadow: var(--shadow);
+}
+
+.invoice__thanks {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border);
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+}
+
+.invoice-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; max-width: 44rem; margin: 1rem auto 0; }
+.btn--green { background: #00875a; color: hsl(0 0% 100%); }
+.btn--whatsapp { background: #00a884; color: hsl(0 0% 100%); }
 
 @media print {
     body * { visibility: hidden; }

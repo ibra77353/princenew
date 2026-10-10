@@ -209,6 +209,10 @@ if (!function_exists('icon')) {
             'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.9 4.9l1.4 1.4"/><path d="M17.7 17.7l1.4 1.4"/><path d="M4.9 19.1l1.4-1.4"/><path d="M17.7 6.3l1.4-1.4"/>',
             'refresh' => '<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>',
             'arrow-down' => '<path d="M12 4v14"/><path d="M6 13l6 6 6-6"/>',
+            'phone' => '<path d="M5 3.5h3l1.5 4-1.8 1.4a11 11 0 0 0 5.4 5.4L14.5 12.5l4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>',
+            'pin' => '<path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+            'share' => '<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.9 15.8 6.8"/><path d="M8.2 13.1l7.6 4.1"/>',
+            'message' => '<path d="M21 12a8 8 0 0 1-8 8H8l-5 3 1.5-4.7A8 8 0 1 1 21 12z"/>',
         ];
 
         $path = $paths[$name] ?? $paths['activity'];

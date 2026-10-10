@@ -8,8 +8,8 @@
 ?>
 <div class="page-header">
     <div>
-        <h1>الموزعون</h1>
-        <p>إدارة بيانات الموزعين ومتابعة الأرصدة المستحقة.</p>
+        <h1>إدارة الموزعين</h1>
+        <p>إدارة بيانات الموزعين وكشوف الحسابات.</p>
     </div>
     <button type="button" class="btn btn--primary" data-modal-open="distributor-create"><?= icon('plus') ?> موزع جديد</button>
 </div>
@@ -45,66 +45,60 @@
         </div>
     </div>
 <?php else: ?>
-    <div class="table-wrap">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>الاسم</th>
-                    <th>الهاتف</th>
-                    <th>المبيعات النشطة</th>
-                    <th>المدفوع عند البيع</th>
-                    <th>التحصيلات</th>
-                    <th>الرصيد المستحق</th>
-                    <th>الحالة</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($distributors as $distributor): ?>
-                    <tr>
-                        <td>
-                            <a class="text-bold" href="<?= e(url('/distributors/' . $distributor['id'])) ?>">
-                                <?= e($distributor['name']) ?>
-                            </a>
-                        </td>
-                        <td><?= e($distributor['phone'] ?? '—') ?></td>
-                        <td><?= e(money($distributor['sales_total'])) ?></td>
-                        <td><?= e(money($distributor['sales_paid'])) ?></td>
-                        <td><?= e(money($distributor['collected'])) ?></td>
-                        <td class="<?= (float) $distributor['balance'] > 0 ? 'text-danger text-bold' : 'text-success' ?>">
-                            <?= e(money($distributor['balance'])) ?>
-                        </td>
-                        <td>
-                            <span class="badge <?= $distributor['status'] === 'active' ? 'badge--success' : 'badge--danger' ?>">
-                                <?= $distributor['status'] === 'active' ? 'نشط' : 'معطّل' ?>
-                            </span>
-                        </td>
-                        <td>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn--outline btn--sm" data-fill="distributor-edit"
-                                        data-values='<?= e(json_encode([
-                                            'id' => (int) $distributor['id'],
-                                            'name' => $distributor['name'],
-                                            'phone' => $distributor['phone'],
-                                            'address' => $distributor['address'],
-                                            'notes' => $distributor['notes'],
-                                            'status' => $distributor['status'],
-                                        ], JSON_UNESCAPED_UNICODE)) ?>'>
-                                    <?= icon('edit') ?>
-                                </button>
-                                <form method="post" action="<?= e(url('/distributors/' . $distributor['id'] . '/delete')) ?>">
-                                    <?= csrf_field() ?>
-                                    <button type="submit" class="btn btn--soft-danger btn--sm"
-                                            data-confirm="حذف الموزع «<?= e($distributor['name']) ?>»؟">
-                                        <?= icon('trash') ?>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+    <div class="record-list record-list--auto">
+        <?php foreach ($distributors as $distributor): ?>
+            <article class="card card--pad record">
+                <div class="record__head">
+                    <div>
+                        <h3 class="record__id"><?= e($distributor['name']) ?></h3>
+                        <div class="record__meta">
+                            <?php if (!empty($distributor['phone'])): ?>
+                                <span><?= icon('phone') ?> <?= e($distributor['phone']) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($distributor['address'])): ?>
+                                <span><?= icon('pin') ?> <?= e($distributor['address']) ?></span>
+                            <?php endif; ?>
+                            <span><?= icon('history') ?> <?= e(fdate($distributor['created_at'] ?? null)) ?></span>
+                        </div>
+                    </div>
+                    <span class="badge <?= $distributor['status'] === 'active' ? 'badge--success' : 'badge--danger' ?>">
+                        <?= $distributor['status'] === 'active' ? 'نشط' : 'معطّل' ?>
+                    </span>
+                </div>
+
+                <div class="record__foot">
+                    <div class="record__amount <?= (float) $distributor['balance'] > 0 ? 'text-danger' : 'text-success' ?>">
+                        <?= e(money($distributor['balance'])) ?>
+                        <span class="record__sub">الرصيد المستحق</span>
+                    </div>
+                    <div class="btn-group">
+                        <a class="btn btn--outline btn--sm" href="<?= e(url('/distributors/' . $distributor['id'])) ?>">
+                            <?= icon('receipt') ?> كشف حساب
+                        </a>
+                        <button type="button" class="btn btn--outline btn--sm" data-fill="distributor-edit"
+                                data-values='<?= e(json_encode([
+                                    'id' => (int) $distributor['id'],
+                                    'name' => $distributor['name'],
+                                    'phone' => $distributor['phone'],
+                                    'address' => $distributor['address'],
+                                    'notes' => $distributor['notes'],
+                                    'status' => $distributor['status'],
+                                ], JSON_UNESCAPED_UNICODE)) ?>'
+                                aria-label="تعديل بيانات الموزع">
+                            <?= icon('edit') ?>
+                        </button>
+                        <form method="post" action="<?= e(url('/distributors/' . $distributor['id'] . '/delete')) ?>">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn--soft-danger btn--sm"
+                                    aria-label="حذف الموزع"
+                                    data-confirm="حذف الموزع «<?= e($distributor['name']) ?>»؟">
+                                <?= icon('trash') ?>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </article>
+        <?php endforeach; ?>
     </div>
 <?php endif; ?>
 

@@ -7,6 +7,7 @@
  */
 $symbol = (string) ($settings['currency_symbol'] ?? 'ر.ي');
 $isActive = $sale['status'] === 'active';
+$isPaid = (float) $remaining <= 0;
 ?>
 <div class="page-header no-print">
     <div>
@@ -15,12 +16,6 @@ $isActive = $sale['status'] === 'active';
     </div>
     <div class="btn-group">
         <a class="btn btn--outline" href="<?= e(url('/sales')) ?>">رجوع</a>
-        <button type="button" class="btn btn--outline" data-print><?= icon('printer') ?> طباعة</button>
-        <button type="button" class="btn btn--primary"
-                data-whatsapp
-                data-phone="<?= e($sale['distributor_phone'] ?? '') ?>">
-            مشاركة واتساب
-        </button>
     </div>
 </div>
 
@@ -43,9 +38,14 @@ $isActive = $sale['status'] === 'active';
         <div class="text-end">
             <p class="text-bold">فاتورة <?= e($sale['invoice_number']) ?></p>
             <p class="text-xs text-muted"><?= e(fdatetime($sale['sale_date'])) ?></p>
-            <span class="badge <?= $isActive ? 'badge--success' : 'badge--danger' ?>">
-                <?= $isActive ? 'نشطة' : 'ملغاة' ?>
-            </span>
+            <div class="row" style="justify-content:flex-end">
+                <span class="badge <?= $isActive ? 'badge--success' : 'badge--danger' ?>">
+                    <?= $isActive ? 'نشطة' : 'ملغاة' ?>
+                </span>
+                <span class="badge <?= $isPaid ? 'badge--success' : 'badge--danger' ?>">
+                    <?= $isPaid ? 'مدفوعة' : 'غير مدفوعة' ?>
+                </span>
+            </div>
         </div>
     </div>
 
@@ -72,15 +72,17 @@ $isActive = $sale['status'] === 'active';
         <table class="table">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>الباقة</th>
-                    <th>عدد الشدات</th>
-                    <th>سعر الشدة</th>
+                    <th>الشدات</th>
+                    <th>السعر</th>
                     <th>الإجمالي</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($sale['items'] as $item): ?>
+                <?php foreach ($sale['items'] as $index => $item): ?>
                     <tr>
+                        <td><?= e((string) ($index + 1)) ?></td>
                         <td><?= e($item['package_name'] ?? '—') ?></td>
                         <td><?= e((string) $item['quantity']) ?></td>
                         <td><?= e(money($item['unit_price'])) ?></td>
@@ -93,9 +95,11 @@ $isActive = $sale['status'] === 'active';
 
     <div class="invoice__totals">
         <div><span>الإجمالي</span><span><?= e(money($sale['total_amount'])) ?></span></div>
-        <div><span>المدفوع عند البيع</span><span><?= e(money($sale['paid_amount'])) ?></span></div>
-        <div class="grand"><span>المتبقي</span><span><?= e(money($remaining)) ?></span></div>
+        <div><span>المدفوع</span><span class="text-success"><?= e(money($sale['paid_amount'])) ?></span></div>
+        <div class="grand"><span>المتبقي</span><span class="text-danger"><?= e(money($remaining)) ?></span></div>
     </div>
+
+    <p class="invoice__thanks">شكراً لتعاملكم مع <?= e($settings['network_name'] ?? 'شبكة البرنس') ?></p>
 
     <?php if (!empty($sale['notes'])): ?>
         <p class="text-xs text-muted mt-3">ملاحظات: <?= e($sale['notes']) ?></p>
@@ -120,6 +124,18 @@ $isActive = $sale['status'] === 'active';
             <?php endforeach; ?>
         </ul>
     <?php endif; ?>
+</div>
+
+<div class="invoice-actions no-print">
+    <button type="button" class="btn btn--green" data-share>
+        <?= icon('share') ?> <span data-share-label>مشاركة</span>
+    </button>
+    <button type="button" class="btn btn--whatsapp"
+            data-whatsapp
+            data-phone="<?= e($sale['distributor_phone'] ?? '') ?>">
+        <?= icon('message') ?> واتساب
+    </button>
+    <button type="button" class="btn btn--outline" data-print><?= icon('printer') ?> طباعة</button>
 </div>
 
 <?php if ($isActive): ?>

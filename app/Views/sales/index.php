@@ -12,7 +12,7 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
 <div class="page-header">
     <div>
         <h1>المبيعات</h1>
-        <p>إنشاء وإدارة فواتير البيع. الأسعار المعتمدة تأتي من قاعدة البيانات.</p>
+        <p>إنشاء وإدارة عمليات البيع.</p>
     </div>
     <a class="btn btn--primary" href="<?= e(url('/sales/create')) ?>"><?= icon('plus') ?> بيع جديد</a>
 </div>
@@ -72,56 +72,46 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
         </div>
     </div>
 <?php else: ?>
-    <div class="table-wrap">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>رقم الفاتورة</th>
-                    <th>الموزع</th>
-                    <th>التاريخ</th>
-                    <th>النوع</th>
-                    <th>الإجمالي</th>
-                    <th>المدفوع</th>
-                    <th>المتبقي</th>
-                    <th>الحالة</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($sales as $sale): ?>
-                    <?php $remaining = (float) $sale['total_amount'] - (float) $sale['paid_amount'] - (float) \App\Services\Core\Database::scalar("SELECT COALESCE(SUM(amount),0) FROM collections WHERE sale_id = ? AND status = 'active'", [$sale['id']]); ?>
-                    <tr>
-                        <td><a class="text-bold" href="<?= e(url('/sales/' . $sale['id'])) ?>"><?= e($sale['invoice_number']) ?></a></td>
-                        <td><?= e($sale['distributor_name']) ?></td>
-                        <td><?= e(fdatetime($sale['sale_date'])) ?></td>
-                        <td><?= $sale['payment_type'] === 'cash' ? 'نقدي' : 'آجل' ?></td>
-                        <td><?= e(money($sale['total_amount'])) ?></td>
-                        <td><?= e(money($sale['paid_amount'])) ?></td>
-                        <td class="<?= $remaining > 0 ? 'text-danger' : 'text-success' ?>"><?= e(money($remaining)) ?></td>
-                        <td>
-                            <span class="badge <?= $sale['status'] === 'active' ? 'badge--success' : 'badge--danger' ?>">
-                                <?= $sale['status'] === 'active' ? 'نشطة' : 'ملغاة' ?>
-                            </span>
-                        </td>
-                        <td>
-                            <div class="btn-group">
-                                <a class="btn btn--outline btn--sm" href="<?= e(url('/sales/' . $sale['id'])) ?>"><?= icon('printer') ?> فاتورة</a>
-                                <?php if ($sale['status'] === 'active'): ?>
-                                    <button type="button" class="btn btn--soft-danger btn--sm" data-fill="sale-cancel"
-                                            data-values='<?= e(json_encode([
-                                                'sale_id' => (int) $sale['id'],
-                                                'invoice_number' => $sale['invoice_number'],
-                                                'total_amount' => amount($sale['total_amount']),
-                                            ], JSON_UNESCAPED_UNICODE)) ?>'>
-                                        <?= icon('x') ?> إلغاء
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+    <div class="record-list">
+        <?php foreach ($sales as $sale): ?>
+            <?php $remaining = (float) $sale['total_amount'] - (float) $sale['paid_amount'] - (float) \App\Services\Core\Database::scalar("SELECT COALESCE(SUM(amount),0) FROM collections WHERE sale_id = ? AND status = 'active'", [$sale['id']]); ?>
+            <article class="card card--pad record">
+                <div class="record__head">
+                    <div>
+                        <a class="record__id" href="<?= e(url('/sales/' . $sale['id'])) ?>"><?= e($sale['invoice_number']) ?></a>
+                        <div class="record__meta">
+                            <span><?= icon('users') ?> <?= e($sale['distributor_name']) ?></span>
+                            <span><?= icon('history') ?> <?= e(fdatetime($sale['sale_date'])) ?></span>
+                            <span><?= icon('package') ?> <?= e((string) (int) ($sale['items_count'] ?? 0)) ?> عنصر</span>
+                            <span><?= $sale['payment_type'] === 'cash' ? 'نقدي' : 'آجل' ?></span>
+                        </div>
+                    </div>
+                    <span class="badge <?= $sale['status'] === 'active' ? 'badge--success' : 'badge--danger' ?>">
+                        <?= $sale['status'] === 'active' ? 'نشطة' : 'ملغاة' ?>
+                    </span>
+                </div>
+
+                <div class="record__foot">
+                    <div class="record__amount">
+                        <?= e(money($sale['total_amount'])) ?>
+                        <span class="record__sub <?= $remaining > 0 ? 'text-danger' : 'text-success' ?>">متبقي <?= e(money($remaining)) ?></span>
+                    </div>
+                    <div class="btn-group">
+                        <a class="btn btn--outline btn--sm" href="<?= e(url('/sales/' . $sale['id'])) ?>"><?= icon('printer') ?> فاتورة</a>
+                        <?php if ($sale['status'] === 'active'): ?>
+                            <button type="button" class="btn btn--soft-danger btn--sm" data-fill="sale-cancel"
+                                    data-values='<?= e(json_encode([
+                                        'sale_id' => (int) $sale['id'],
+                                        'invoice_number' => $sale['invoice_number'],
+                                        'total_amount' => amount($sale['total_amount']),
+                                    ], JSON_UNESCAPED_UNICODE)) ?>'>
+                                <?= icon('x') ?> إلغاء
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </article>
+        <?php endforeach; ?>
     </div>
 
     <?php \App\Services\Core\View::partial('partials/pagination', [
