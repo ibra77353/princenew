@@ -1,0 +1,83 @@
+# بيئة تشغيل مشروع شبكة البرنس على منصة Base44 (تطوير فقط).
+# التطبيق يعمل من الكود المُثبَّت (bind mount) عبر Apache، وقاعدة البيانات MySQL.
+services:
+  db:
+    image: mysql:8.0
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: prince_root_dev
+      MYSQL_DATABASE: prince_net
+      MYSQL_USER: prince
+      MYSQL_PASSWORD: prince_dev
+    command: ["--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # تطبيق المخطط والبيانات الأولية مرة واحدة عند الإقلاع
+  db-init:
+    image: mysql:8.0
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MYSQL_ROOT_PASSWORD: prince_root_dev
+    volumes:
+      - ./database/schema.sql:/schema.sql:ro
+    entrypoint: ["sh", "-ec", "mysql -h db -u root -p\"$$MYSQL_ROOT_PASSWORD\" prince_net < /schema.sql && echo 'schema applied'"]
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - "3000:80"
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: prince_net
+      DB_USER: prince
+      DB_PASS: prince_dev
+      APP_TIMEZONE: Asia/Riyadh
+      SESSION_SECURE: "0"
+      # يُمرَّر من بيئة المنصة عند وجوده (وضع المعاينة)، ولا يُثبَّت أبدًا على 1
+      BASE44_PREVIEW_MODE:
+    # تهيئة الصلاحيات ثم تشغيل Apache: مجلد المستودع المُثبَّت يصل بصلاحيات مقيّدة،
+    # ومجلد النسخ الاحتياطية مجلد بيانات يجب أن يكتب فيه www-data.
+    command:
+      - sh
+      - -ec
+      - |
+        chmod -R o+rX /var/www/html 2>/dev/null || true
+        mkdir -p /var/www/html/database/backups
+        chown -R www-data:www-data /var/www/html/database/backups
+        exec apache2-foreground
+    volumes:
+      - .:/var/www/html
+      - backups:/var/www/html/database/backups
+    healthcheck:
+      # يتحقق من استجابة Apache/PHP فعليًا ومن الاتصال بقاعدة البيانات معًا
+      test:
+        - CMD-SHELL
+        - |
+          php -r "exit(@file_get_contents('http://127.0.0.1/login')===false?1:0);" || { echo web-failed; exit 1; }
+          php -r 'try { new PDO("mysql:host=".getenv("DB_HOST").";dbname=".getenv("DB_NAME"), getenv("DB_USER"), getenv("DB_PASS")); } catch (Throwable $$e) { echo "db-failed"; exit(1); }'
+      interval: 10s
+      timeout: 6s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  db_data:
+  backups:
