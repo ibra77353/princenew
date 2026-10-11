@@ -7,12 +7,13 @@
  * @var array<string,mixed> $filters
  * @var array{page:int,pages:int} $pager
  * @var float $total
+ * @var float $cashBalance
  */
 ?>
 <div class="page-header">
     <div>
         <h1>المصروفات</h1>
-        <p>تُسجَّل المصروفات مع حركة نقدية خارجة من الصندوق.</p>
+        <p>تُسجَّل المصروفات مع حركة نقدية خارجة من الصندوق، ولا تُقبل إذا تجاوزت الرصيد المتاح.</p>
     </div>
     <button type="button" class="btn btn--primary" data-modal-open="expense-create"><?= icon('plus') ?> مصروف جديد</button>
 </div>
@@ -131,6 +132,7 @@
                         <input class="input" id="exp-notes" name="notes" type="text">
                     </div>
                 </div>
+                <p class="hint">الرصيد المتاح في الصندوق: <?= e(money($cashBalance)) ?></p>
                 <div class="form-actions">
                     <button type="button" class="btn btn--outline" data-modal-close>إلغاء</button>
                     <button type="submit" class="btn btn--primary"><?= icon('save') ?> حفظ المصروف</button>

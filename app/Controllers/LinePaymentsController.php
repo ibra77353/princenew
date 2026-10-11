@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\Line;
 use App\Models\LinePayment;
+use App\Services\CashService;
 use App\Services\Core\Controller;
 use App\Services\Core\Database;
 use App\Services\OutflowService;
@@ -38,6 +39,7 @@ final class LinePaymentsController extends Controller
             'filters' => ['line_id' => $lineId, 'from' => $from, 'to' => $to],
             'pager' => $pager,
             'sum' => round($sum, 2),
+            'cashBalance' => CashService::balance(),
         ]);
     }
 

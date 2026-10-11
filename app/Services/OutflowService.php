@@ -11,6 +11,8 @@ use App\Services\Core\Setting;
 /**
  * العمليات المالية الخارجة: المصروفات، دفعات الخطوط، وسحوبات المالك.
  * كل عملية تُسجّل حركة نقدية خارجة مرتبطة بها، مع منع تكرار الحركة.
+ * كفاية الصندوق تُفرض مركزيًا في `CashService::record()` لكل الأنواع الثلاثة بشكل موحّد،
+ * فلا تحتاج أي عملية من هنا لفحص منفصل.
  */
 final class OutflowService
 {
@@ -81,8 +83,6 @@ final class OutflowService
         $date = self::normalizeDate($date);
 
         return Database::transaction(function () use ($amount, $reason, $date, $notes) {
-            CashService::ensureSufficient($amount);
-
             $id = Database::insert(
                 'INSERT INTO owner_withdrawals (amount, reason, notes, withdrawal_date, created_at, created_by)
                  VALUES (?, ?, ?, ?, ?, ?)',

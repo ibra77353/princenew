@@ -11,9 +11,20 @@ use App\Services\Core\Setting;
 /**
  * سجل الصندوق الموحّد: كل حركة نقدية مرتبطة بالعملية التي أنشأتها.
  * الرصيد = الرصيد الافتتاحي + إجمالي المقبوضات − إجمالي المدفوعات.
+ *
+ * سياسة كفاية الصندوق الموحّدة: كل حركة خارجة **تشغيلية** (مصروف، دفعة خط، سحب مالك)
+ * تُرفض إذا تجاوزت الرصيد المتاح، والفحص يُنفَّذ هنا في نقطة واحدة عند تسجيل الحركة،
+ * داخل معاملة العملية نفسها، فلا يمكن لأي مسار خروج أن يتجاوز الرصيد.
+ * الحركات العكسية (`reversal`) مستثناة لأنها تُلغي أثر حركة سابقة ولا يجوز رفضها.
  */
 final class CashService
 {
+    /** المصادر الخارجة الخاضعة لكفاية الصندوق. */
+    private const GUARDED_OUT_SOURCES = ['expense', 'line_payment', 'owner_withdrawal'];
+
+    /** هامش تسامح للفروق العشرية. */
+    private const SUFFICIENCY_TOLERANCE = 0.001;
+
     public static function record(
         string $type,
         string $source,
@@ -28,6 +39,10 @@ final class CashService
         }
         if ($amount <= 0) {
             throw new \RuntimeException('مبلغ الحركة النقدية يجب أن يكون أكبر من صفر.');
+        }
+
+        if ($type === 'out') {
+            self::assertSufficient($amount, $source);
         }
 
         return Database::insert(
@@ -115,10 +130,34 @@ final class CashService
         ];
     }
 
-    public static function ensureSufficient(float $amount): void
+    /**
+     * التحقق الموحّد من كفاية الصندوق لمبلغ خارج.
+     * المصادر غير الخاضعة للفحص (مثل الحركات العكسية) تُتجاوز بلا رفض.
+     */
+    public static function assertSufficient(float $amount, string $source): void
     {
-        if ($amount > self::balance() + 0.001) {
-            throw new \RuntimeException('رصيد الصندوق غير كافٍ لهذه العملية.');
+        if (!in_array($source, self::GUARDED_OUT_SOURCES, true)) {
+            return;
         }
+
+        $available = self::lockedBalance();
+        if ($amount > $available + self::SUFFICIENCY_TOLERANCE) {
+            throw new \RuntimeException(sprintf(
+                'رصيد الصندوق غير كافٍ: المتاح %s والمطلوب %s.',
+                number_format($available, 2),
+                number_format($amount, 2)
+            ));
+        }
+    }
+
+    /**
+     * رصيد الصندوق مقروءًا تحت قفل تسلسلي على صف الإعدادات، فيتسلسل الفحص مع أي حركة
+     * خارجة متزامنة ولا يمكن لعمليتين معًا تجاوز الرصيد (منع الرصيد السالب).
+     */
+    private static function lockedBalance(): float
+    {
+        Database::one('SELECT id FROM settings WHERE id = 1 FOR UPDATE');
+
+        return self::balance();
     }
 }

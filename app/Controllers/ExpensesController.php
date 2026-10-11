@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\Expense;
+use App\Services\CashService;
 use App\Services\Core\Controller;
 use App\Services\Core\Database;
 use App\Services\OutflowService;
@@ -35,6 +36,7 @@ final class ExpensesController extends Controller
             'filters' => ['category' => $category, 'from' => $from, 'to' => $to],
             'pager' => $pager,
             'total' => $model->total($from !== '' ? $from : null, $to !== '' ? $to : null),
+            'cashBalance' => CashService::balance(),
         ]);
     }
 

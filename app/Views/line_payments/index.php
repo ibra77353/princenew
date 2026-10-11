@@ -6,12 +6,13 @@
  * @var array<string,mixed> $filters
  * @var array{page:int,pages:int} $pager
  * @var float $sum
+ * @var float $cashBalance
  */
 ?>
 <div class="page-header">
     <div>
         <h1>دفعات الخطوط</h1>
-        <p>كل دفعة تُخصم من الصندوق وتُسجَّل بتاريخ التسديد الفعلي الذي تختاره.</p>
+        <p>كل دفعة تُخصم من الصندوق وتُسجَّل بتاريخ التسديد الفعلي الذي تختاره، ولا تُقبل إذا تجاوزت الرصيد المتاح.</p>
     </div>
     <button type="button" class="btn btn--primary" data-modal-open="payment-create"><?= icon('plus') ?> دفعة جديدة</button>
 </div>
@@ -127,6 +128,7 @@
                     <label for="pay-notes">ملاحظات</label>
                     <textarea class="input" id="pay-notes" name="notes" rows="2"></textarea>
                 </div>
+                <p class="hint">الرصيد المتاح في الصندوق: <?= e(money($cashBalance)) ?></p>
                 <div class="form-actions">
                     <button type="button" class="btn btn--outline" data-modal-close>إلغاء</button>
                     <button type="submit" class="btn btn--primary"><?= icon('save') ?> حفظ الدفعة</button>
