@@ -76,9 +76,18 @@ SET FOREIGN_KEY_CHECKS = 1;
 docker compose -f docker-compose.base44.yml exec -T db mysql -u root -pprince_root_dev prince_net -e "SELECT COUNT(*) FROM users;"
 ```
 
-### 4. مجلد النسخ الاحتياطية
+### 4. مجلد النسخ الاحتياطية وتكامل الاستعادة
 `database/backups` مجلد بيانات (volume) ويجب أن يملكه `www-data` — تكفّلت به أوامر التشغيل في `docker-compose.base44.yml`.
 لا تُحذف مجلدات البيانات (volumes) لتحديث التبعيات.
+
+- `BackupService::TABLES` هي الجداول الأساسية (14). أما `inventory_stock` فجدول **مشتق** (`DERIVED_TABLES`):
+  يُصدَّر داخل الملف للعلم، ويُعاد بناؤه من `inventory_movements` بعد كل استعادة عبر `rebuildStock()`،
+  فلا ينفصل رصيد المخزون عن سجل الحركات أبدًا. لا تعدّل الرصيد يدويًا.
+- `BackupService::restore()` تتحقق أولًا (`assertPayloadIsRestorable()`) من الأعمدة والقيم الإلزامية
+  وتفرّد المفاتيح وسلامة المفاتيح الخارجية **قبل أي كتابة** (الرفض لا يترك أي أثر)، ثم تُنفِّذ الاستعادة
+  داخل معاملة واحدة باستخدام `DELETE` (لا `TRUNCATE`) مع تفعيل المفاتيح الخارجية عند الإدراج، فأي فشل
+  غير متوقع يُرجِع قاعدة البيانات بالكامل إلى حالتها.
+- نسخة قديمة بصيغة v1 (بلا `inventory_stock`) تبقى قابلة للاستعادة، ويُعاد بناء الرصيد بعدها.
 
 ### 5. الحماية
 - `.htaccess` في الجذر يحوّل كل الطلبات إلى `index.php` ويمنع الوصول إلى `\.(sql|json|md|log|ini|bak|zip)$`.
