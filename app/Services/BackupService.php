@@ -15,9 +15,9 @@ use App\Services\Core\Setting;
 final class BackupService
 {
     public const TABLES = [
-        'users', 'packages', 'inventory_movements', 'distributors', 'sales', 'sale_items',
-        'collections', 'lines', 'line_payments', 'expenses', 'owner_withdrawals',
-        'cash_transactions', 'settings', 'audit_logs',
+        'users', 'packages', 'inventory_stock', 'inventory_movements', 'distributors',
+        'sales', 'sale_items', 'collections', 'lines', 'line_payments', 'expenses',
+        'owner_withdrawals', 'cash_transactions', 'settings', 'audit_logs', 'backups',
     ];
 
     /** اقتباس أسماء الجداول المحجوزة في MySQL. */
