@@ -174,6 +174,13 @@ final class Sale extends Model
             $where[] = 's.status = ?';
             $params[] = $filters['status'];
         }
+        // عرض السداد: «غير مسددة» = متبقي أكبر من صفر (متبقي الملغاة صفر فلا تظهر)،
+        // و«المسددة» = فاتورة نشطة اكتمل سدادها، فالملغاة لا تُعدّ مسددة.
+        if (!empty($filters['payment'])) {
+            $where[] = $filters['payment'] === 'unpaid'
+                ? '(' . self::remainingSql('s') . ') > 0'
+                : "s.status = 'active' AND (" . self::remainingSql('s') . ') <= 0';
+        }
         if (!empty($filters['from']) || !empty($filters['to'])) {
             $range = DateRange::normalize((string) ($filters['from'] ?? ''), (string) ($filters['to'] ?? ''));
             DateRange::apply($where, $params, 's.sale_date', $range['from'], $range['to']);

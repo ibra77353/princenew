@@ -73,9 +73,10 @@ final class InventoryMovement extends Model
     public function recent(int $limit = 200): array
     {
         return Database::all(
-            'SELECT m.*, p.name AS package_name, p.color AS package_color
+            'SELECT m.*, p.name AS package_name, p.color AS package_color, u.name AS created_by_name
              FROM inventory_movements m
              LEFT JOIN packages p ON p.id = m.package_id
+             LEFT JOIN users u ON u.id = m.created_by
              ORDER BY m.id DESC LIMIT ' . (int) $limit
         );
     }

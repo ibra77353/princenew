@@ -363,3 +363,24 @@ SELECT package_id, SUM(CASE ... END), NOW() FROM inventory_movements GROUP BY pa
   انقسام الصف بين صفحتين، فلا تُقصّ أعمدة التقرير الطويل على الورق.
 - لا تُغيّر `.print-area { position: absolute }`: هي التي ترفع المستند إلى أعلى الورقة لأن عناصر القائمة
   والترويسة المخفية بـ`visibility` تبقى محتلة لمساحتها في التخطيط.
+
+### عروض الفواتير والسداد (`sales/index.php` + `Sale::buildFilters`)
+
+- فلتر `payment`: `''` = الكل، `unpaid` = «غير مسددة (آجل قائم)» أي `remainingSql('s') > 0`
+  (ومتبقي الملغاة صفر فلا تظهر فيه)، و`paid` = «مسددة بالكامل» بشرط `s.status = 'active'` مع `remainingSql <= 0`
+  — فالفاتورة الملغاة ليست مسددة ولا عليها دين. تُطبَّق نفس الشروط على الصفوف وعلى الإجماليات
+  (`totalsFiltered`) فلا يفترق المجموع عن المعروض.
+- لا تُعِد حساب المتبقي في العرض: يأتي من `Sale::remainingSql` عبر `listing()`.
+
+### كشف حساب الموزع (`distributors/show.php`)
+
+- فلتر فترة (من/إلى) يقصر **الفواتير والتحصيلات ومجموعهما** على الفترة (`Sale::listing` + `Collection::forDistributor`)،
+  أما «الرصيد المستحق» فيبقى `Distributor::balance()` على كل الفترات لأن الدين لا يتوقّف عند حدّ الفترة.
+- المستند كله داخل `.print-area` مع زر `data-print` في الترويسة (خارج المنطقة) وترويسة ورقية `.print-only`
+  تحمل الموزع والفترة والرصيد — نفس قاعدة الطباعة أعلاه، فأي شاشة طباعة بلا `.print-area` تطبع فارغة.
+
+### عمود «المنفّذ» في سجل حركات المخزون (`inventory/index.php`)
+
+- `InventoryMovement::recent()` يضم `users u ON u.id = m.created_by` ويعرض `created_by_name`، و`InventoryService`
+  يكتب `created_by = Auth::id()` عند كل حركة (إضافة/تسوية/بيع/إرجاع). الحركات المُدخلة يدويًا من `mysql`
+  أو من سكربت بلا جلسة تبقى `created_by = NULL` فتظهر «—» (طبيعي لا عُطل).

@@ -8,6 +8,8 @@
  * @var float $paidAtSale
  * @var float $validCollections
  * @var float $balance
+ * @var array{from:string,to:string} $filters
+ * @var string $rangeError
  */
 ?>
 <div class="page-header">
@@ -21,8 +23,49 @@
     <div class="btn-group">
         <a class="btn btn--outline" href="<?= e(url('/distributors')) ?>">رجوع</a>
         <a class="btn btn--primary" href="<?= e(url('/collections')) ?>"><?= icon('coins') ?> تسجيل تحصيل</a>
+        <button type="button" class="btn btn--outline" data-print><?= icon('printer') ?> طباعة الكشف</button>
     </div>
 </div>
+
+<form method="get" action="<?= e(url('/distributors/' . $distributor['id'])) ?>" class="filters no-print">
+    <div class="field">
+        <label for="d-from">من تاريخ</label>
+        <input class="input" id="d-from" name="from" type="date" value="<?= e($filters['from']) ?>">
+    </div>
+    <div class="field">
+        <label for="d-to">إلى تاريخ</label>
+        <input class="input" id="d-to" name="to" type="date" value="<?= e($filters['to']) ?>">
+    </div>
+    <div class="field self-end">
+        <button type="submit" class="btn btn--primary"><?= icon('chart') ?> عرض الكشف</button>
+    </div>
+    <div class="field self-end">
+        <a class="btn btn--outline" href="<?= e(url('/distributors/' . $distributor['id'])) ?>">كل الفترات</a>
+    </div>
+</form>
+
+<?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
+
+<div class="print-area">
+    <?php // ترويسة ورقية: تُعرض في الطباعة فقط، فتبيّن الورقة صاحب الكشف ونطاقه وحالة الدين ?>
+    <div class="print-only mb-4">
+        <h2>كشف حساب <?= e($settings['network_name'] ?? 'شبكة البرنس') ?></h2>
+        <p class="hint">
+            الموزع: <?= e($distributor['name']) ?><?= !empty($distributor['phone']) ? ' — ' . e($distributor['phone']) : '' ?>
+            • الفترة: <?= $filters['from'] !== '' ? e(fdate($filters['from'])) : 'من البداية' ?>
+            — <?= $filters['to'] !== '' ? e(fdate($filters['to'])) : 'حتى اليوم' ?>
+        </p>
+        <p class="hint">
+            الرصيد المستحق الحالي (كل الفترات): <?= e(money($balance)) ?>
+            — إجماليات الكشف للفواتير النشطة فقط (الملغاة تظهر بحالتها ومتبقيها صفر)،
+            والتحصيلات المعكوسة تبقى معروضة بحالتها ولا تدخل في إجمالي التحصيلات.
+        </p>
+    </div>
+
+    <p class="text-sm text-muted mb-4">
+        الفترة: <?= $filters['from'] !== '' ? e(fdate($filters['from'])) : 'من البداية' ?>
+        — <?= $filters['to'] !== '' ? e(fdate($filters['to'])) : 'حتى اليوم' ?>
+    </p>
 
 <div class="grid grid--stats mb-4">
     <div class="stat">
@@ -139,3 +182,4 @@
         </div>
     <?php endif; ?>
 </section>
+</div>

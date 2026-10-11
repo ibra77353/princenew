@@ -71,13 +71,16 @@ final class Collection extends Model
         return [implode(' AND ', $where), $params];
     }
 
-    public function forDistributor(int $distributorId): array
+    /** تحصيلات الموزع، مع إمكانية حصرها بفترة (كشف الحساب) بنفس شروط الفترة في بقية الشاشات. */
+    public function forDistributor(int $distributorId, ?string $from = null, ?string $to = null): array
     {
+        [$where, $params] = $this->buildFilters($distributorId, $from, $to);
+
         return Database::all(
             'SELECT c.*, s.invoice_number FROM collections c
              LEFT JOIN sales s ON s.id = c.sale_id
-             WHERE c.distributor_id = ? ORDER BY c.collection_date DESC, c.id DESC',
-            [$distributorId]
+             WHERE ' . $where . ' ORDER BY c.collection_date DESC, c.id DESC',
+            $params
         );
     }
 

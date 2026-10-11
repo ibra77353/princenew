@@ -25,6 +25,8 @@ final class SalesController extends Controller
             // تجمع الفواتير الملغاة داخل بطاقات معنونة «النشطة» فتظهر إجماليات عُكست لاحقًا.
             // لا تُستخدم str() هنا لأنها تُرجع القيمة الافتراضية عند الفراغ فلا يمكن تمثيل «الكل».
             'status' => self::normalizeStatus($_GET['status'] ?? null),
+            // عرض السداد: '' = الكل، 'unpaid' = آجل قائم، 'paid' = مسددة بالكامل.
+            'payment' => self::normalizePayment($_GET['payment'] ?? null),
         ];
 
         $model = new Sale();
@@ -62,6 +64,14 @@ final class SalesController extends Controller
         $status = trim((string) $value);
 
         return in_array($status, ['active', 'cancelled'], true) ? $status : '';
+    }
+
+    /** تطبيع تصفية السداد: أي قيمة غير معروفة تُعامل كـ«الكل» بلا تصفية. */
+    private static function normalizePayment(mixed $value): string
+    {
+        $payment = trim((string) ($value ?? ''));
+
+        return in_array($payment, ['paid', 'unpaid'], true) ? $payment : '';
     }
 
     public function create(): void

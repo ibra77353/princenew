@@ -124,8 +124,12 @@ final class DistributorsController extends Controller
             return;
         }
 
-        $sales = (new Sale())->listing(['distributor_id' => $id], 200);
-        $collections = (new Collection())->forDistributor($id);
+        // كشف الحساب: الفواتير والتحصيلات تُحصر بالفترة المختارة (المجموع والصفوف معًا)،
+        // أما «الرصيد المستحق» فيبقى رصيد الموزع الحالي على كل الفترات لأن الدين لا يتوقّف عند حدّ الفترة.
+        ['from' => $from, 'to' => $to, 'error' => $rangeError] = $this->dateRange();
+
+        $sales = (new Sale())->listing(['distributor_id' => $id, 'from' => $from, 'to' => $to], 200);
+        $collections = (new Collection())->forDistributor($id, $from, $to);
 
         $activeSalesTotal = 0.0;
         $paidAtSale = 0.0;
@@ -152,6 +156,8 @@ final class DistributorsController extends Controller
             'paidAtSale' => round($paidAtSale, 2),
             'validCollections' => round($validCollections, 2),
             'balance' => (new Distributor())->balance($id),
+            'filters' => ['from' => $from, 'to' => $to],
+            'rangeError' => $rangeError,
         ]);
     }
 

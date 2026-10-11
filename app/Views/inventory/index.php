@@ -123,6 +123,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                         <th>الكمية</th>
                         <th>سعر الشدة</th>
                         <th>السبب</th>
+                        <th>المنفّذ</th>
                         <th>التاريخ</th>
                     </tr>
                 </thead>
@@ -144,6 +145,8 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                             </td>
                             <td><?= e(money($movement['unit_cost'])) ?></td>
                             <td class="wrap"><?= e($movement['reason'] ?? '') ?></td>
+                            <?php // من نفّذ الحركة: حركة البيع تحمل اسم البائع، والإرجاع/التسوية اسم من نفّذها ?>
+                            <td><?= e($movement['created_by_name'] ?? '—') ?></td>
                             <td><?= e(fdatetime($movement['created_at'])) ?></td>
                         </tr>
                     <?php endforeach; ?>

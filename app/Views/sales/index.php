@@ -8,7 +8,7 @@
  * @var array<string,float> $totals
  */
 // الحالة الافتراضية «نشطة» فلا تُعد تصفية اختارها المستخدم.
-$hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to'] !== '' || $filters['status'] !== 'active';
+$hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to'] !== '' || $filters['status'] !== 'active' || $filters['payment'] !== '';
 ?>
 <div class="page-header">
     <div>
@@ -56,6 +56,15 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
             <option value="">الكل</option>
             <option value="active" <?= $filters['status'] === 'active' ? 'selected' : '' ?>>نشطة</option>
             <option value="cancelled" <?= $filters['status'] === 'cancelled' ? 'selected' : '' ?>>ملغاة</option>
+        </select>
+    </div>
+    <div class="field">
+        <label for="s-payment">حالة السداد</label>
+        <?php // عرض واضح للديون القائمة (غير مسددة) وللفواتير المسددة؛ والملغاة ليست مسددة ولا عليها دين ?>
+        <select class="select" id="s-payment" name="payment">
+            <option value="">الكل</option>
+            <option value="unpaid" <?= $filters['payment'] === 'unpaid' ? 'selected' : '' ?>>غير مسددة (آجل قائم)</option>
+            <option value="paid" <?= $filters['payment'] === 'paid' ? 'selected' : '' ?>>مسددة بالكامل</option>
         </select>
     </div>
     <div class="field self-end">
