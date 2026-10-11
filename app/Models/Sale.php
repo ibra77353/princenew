@@ -63,11 +63,12 @@ final class Sale extends Model
     }
 
     /**
-     * تعبير SQL موحّد للمتبقي — مصدر واحد لصفحة الفاتورة وقائمة المبيعات وبطاقة «الآجل (المتبقي)»:
+     * تعبير SQL موحّد للمتبقي — مصدر واحد لصفحة الفاتورة وقائمة المبيعات وبطاقاتها،
+     * وتقارير المبيعات وصفحة الموزع:
      * صفر للفاتورة الملغاة (الإلغاء يُلغي الالتزام ويُعكس المدفوع والتحصيلات)،
      * وإلا: الإجمالي − المدفوع − التحصيلات النشطة.
      */
-    private static function remainingSql(string $alias = 's'): string
+    public static function remainingSql(string $alias = 's'): string
     {
         return "CASE WHEN {$alias}.status = 'active'
                      THEN {$alias}.total_amount - {$alias}.paid_amount

@@ -74,7 +74,8 @@
                 </thead>
                 <tbody>
                     <?php foreach ($sales as $sale): ?>
-                        <?php $remaining = (float) $sale['total_amount'] - (float) $sale['paid_amount']; ?>
+                        <?php // المتبقي الموحّد: الملغاة صفر والتحصيلات مخصومة (كما في قائمة المبيعات وصفحة الفاتورة) ?>
+                        <?php $remaining = (float) $sale['remaining']; ?>
                         <tr>
                             <td><?= e($sale['invoice_number']) ?></td>
                             <td><?= e(fdatetime($sale['sale_date'])) ?></td>

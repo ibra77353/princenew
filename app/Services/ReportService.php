@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Distributor;
 use App\Models\InventoryMovement;
+use App\Models\Sale;
 use App\Services\Core\Database;
 use App\Services\Core\DateRange;
 
@@ -74,10 +75,13 @@ final class ReportService
         }
         $sql = implode(' AND ', $where);
 
+        // الأرقام المالية للفواتير النشطة فقط (مطابقة لقائمة المبيعات وصفحة الفاتورة):
+        // الفاتورة الملغاة لا تدخل في الإجمالي ولا في المدفوع، والآجل غير المحصّل يخصم التحصيلات.
         $totals = Database::one(
             "SELECT COUNT(*) AS invoices,
-                COALESCE(SUM(s.total_amount), 0) AS total,
-                COALESCE(SUM(s.paid_amount), 0) AS paid
+                COALESCE(SUM(CASE WHEN s.status = 'active' THEN s.total_amount END), 0) AS total,
+                COALESCE(SUM(CASE WHEN s.status = 'active' THEN s.paid_amount END), 0) AS paid,
+                COALESCE(SUM(" . Sale::remainingSql('s') . "), 0) AS credit
              FROM sales s WHERE " . $sql,
             $params
         ) ?? [];
@@ -87,7 +91,7 @@ final class ReportService
                 'invoices' => (int) ($totals['invoices'] ?? 0),
                 'total' => round((float) ($totals['total'] ?? 0), 2),
                 'paid' => round((float) ($totals['paid'] ?? 0), 2),
-                'credit' => round((float) ($totals['total'] ?? 0) - (float) ($totals['paid'] ?? 0), 2),
+                'credit' => round((float) ($totals['credit'] ?? 0), 2),
             ],
             'rows' => Database::all(
                 'SELECT s.invoice_number, s.sale_date, s.distributor_name, s.total_amount, s.paid_amount, s.payment_type
@@ -102,7 +106,10 @@ final class ReportService
     {
         $where = ['1 = 1'];
         $params = [];
-        self::applySalesScope($where, $params, $filters);
+        // القسم يخص مبيعات فعلية: نشطة فقط مثل إجمالي المبيعات، فباقة الفاتورة الملغاة أُرجعت للمخزون.
+        $scope = $filters;
+        $scope['status'] = 'active';
+        self::applySalesScope($where, $params, $scope);
         if ($filters['package_id'] > 0) {
             $where[] = 'si.package_id = ?';
             $params[] = $filters['package_id'];
