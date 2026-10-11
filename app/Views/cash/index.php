@@ -15,7 +15,7 @@
 <div class="page-header">
     <div>
         <h1>الصندوق</h1>
-        <p>الرصيد = الرصيد الافتتاحي + إجمالي المقبوضات − إجمالي المدفوعات.</p>
+        <p>الرصيد = الرصيد الافتتاحي + إجمالي المقبوضات − إجمالي المدفوعات. والأرقام تستبعد أثر العمليات الملغاة (تبقى حركاتها في السجل أدناه).</p>
     </div>
     <?php if (is_admin()): // التقارير للمدير فقط، والرابط يرد 403 للموظف ?>
         <div class="btn-group">
@@ -34,40 +34,44 @@
         <span class="stat__value"><?= e(money($openingBalance)) ?></span>
     </div>
     <div class="stat">
-        <span class="stat__title">إجمالي المقبوضات (الكل)</span>
+        <span class="stat__title">إجمالي المقبوضات (بدون الملغاة)</span>
         <span class="stat__value text-success"><?= e(money($allTotals['in'])) ?></span>
     </div>
     <div class="stat">
-        <span class="stat__title">إجمالي المدفوعات (الكل)</span>
+        <span class="stat__title">إجمالي المدفوعات (بدون الملغاة)</span>
         <span class="stat__value text-danger"><?= e(money($allTotals['out'])) ?></span>
     </div>
 </div>
 
 <section class="card card--pad mb-4">
-    <h3 class="section-title"><?= icon('chart') ?> الحركات حسب المصدر</h3>
-    <div class="table-wrap">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>المصدر</th>
-                    <th>مقبوضات</th>
-                    <th>مدفوعات</th>
-                    <th>الصافي</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($bySource as $row): ?>
-                    <?php $net = (float) $row['cash_in'] - (float) $row['cash_out']; ?>
+    <h3 class="section-title"><?= icon('chart') ?> الحركات حسب المصدر (بدون الملغاة)</h3>
+    <?php if ($bySource === []): ?>
+        <p class="text-sm text-muted">لا توجد حركات فعلية مطابقة للتصفية — أثر العمليات الملغاة مستبعد من الأرقام ويبقى ظاهرًا في سجل الحركات أدناه.</p>
+    <?php else: ?>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
                     <tr>
-                        <td><?= e($sources[$row['source']] ?? $row['source']) ?></td>
-                        <td class="text-success"><?= e(money($row['cash_in'])) ?></td>
-                        <td class="text-danger"><?= e(money($row['cash_out'])) ?></td>
-                        <td class="text-bold"><?= e(money($net)) ?></td>
+                        <th>المصدر</th>
+                        <th>مقبوضات</th>
+                        <th>مدفوعات</th>
+                        <th>الصافي</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    <?php foreach ($bySource as $row): ?>
+                        <?php $net = (float) $row['cash_in'] - (float) $row['cash_out']; ?>
+                        <tr>
+                            <td><?= e($sources[$row['source']] ?? $row['source']) ?></td>
+                            <td class="text-success"><?= e(money($row['cash_in'])) ?></td>
+                            <td class="text-danger"><?= e(money($row['cash_out'])) ?></td>
+                            <td class="text-bold"><?= e(money($net)) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
 </section>
 
 <form method="get" action="<?= e(url('/cash')) ?>" class="filters">
@@ -134,7 +138,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="4">إجمالي الفترة المعروضة</td>
+                    <td colspan="4">إجمالي الفترة (بدون الملغاة)</td>
                     <td class="text-success"><?= e(money($periodTotals['in'])) ?></td>
                     <td class="text-danger"><?= e(money($periodTotals['out'])) ?></td>
                 </tr>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Sale;
 use App\Services\Core\Database;
 
 /**
@@ -31,8 +32,10 @@ final class SearchService
                 [$like, $like, $like]
             ),
             'sales' => Database::all(
-                'SELECT id, invoice_number, distributor_name, total_amount, sale_date, status FROM sales
-                 WHERE invoice_number LIKE ? OR distributor_name LIKE ? ORDER BY id DESC LIMIT 20',
+                'SELECT s.id, s.invoice_number, s.distributor_name, s.total_amount, s.sale_date, s.status,
+                        ' . Sale::remainingSql('s') . ' AS remaining
+                 FROM sales s
+                 WHERE s.invoice_number LIKE ? OR s.distributor_name LIKE ? ORDER BY s.id DESC LIMIT 20',
                 [$like, $like]
             ),
             'collections' => Database::all(

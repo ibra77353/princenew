@@ -77,9 +77,18 @@ foreach ($groups as $key => $meta) {
                             <?php elseif ($key === 'distributors'): ?>
                                 <a href="<?= e(url('/distributors/' . $row['id'])) ?>"><span><?= e($row['name']) ?></span><span class="text-xs text-muted"><?= e($row['phone'] ?? '') ?></span></a>
                             <?php elseif ($key === 'sales'): ?>
+                                <?php // نفس مطابقة قائمة المبيعات وصفحة الفاتورة: الحالة + المتبقي بالمعادلة الموحّدة (الملغاة صفر) ?>
+                                <?php $saleIsActive = $row['status'] === 'active'; ?>
+                                <?php $saleRemaining = (float) $row['remaining']; ?>
                                 <a href="<?= e(url('/sales/' . $row['id'])) ?>">
-                                    <span><?= e($row['invoice_number']) ?> — <?= e($row['distributor_name']) ?></span>
-                                    <span class="text-bold"><?= e(money($row['total_amount'])) ?></span>
+                                    <span>
+                                        <?= e($row['invoice_number']) ?> — <?= e($row['distributor_name']) ?>
+                                        <span class="badge <?= $saleIsActive ? 'badge--success' : 'badge--danger' ?>"><?= $saleIsActive ? 'نشطة' : 'ملغاة' ?></span>
+                                    </span>
+                                    <span class="text-end">
+                                        <span class="text-bold"><?= e(money($row['total_amount'])) ?></span>
+                                        <span class="record__sub <?= $saleRemaining > 0 ? 'text-danger' : 'text-success' ?>">متبقي <?= e(money($saleRemaining)) ?></span>
+                                    </span>
                                 </a>
                             <?php elseif ($key === 'collections'): ?>
                                 <a href="<?= e(url('/collections')) ?>"><span><?= e($row['distributor_name'] ?? '—') ?></span><span class="text-bold"><?= e(money($row['amount'])) ?></span></a>

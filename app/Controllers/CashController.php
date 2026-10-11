@@ -17,8 +17,10 @@ final class CashController extends Controller
         $sourceFilter = $source !== '' ? $source : null;
 
         $model = new CashTransaction();
-        // العدد والإجماليات والتفصيل حسب المصدر من نفس فلاتر التصفية (المصدر + الفترة).
+        // العدد والإجماليات والتفصيل حسب المصدر من نفس فلاتر التصفية (المصدر + الفترة)،
+        // والأرقام مستبعدة أثر العمليات الملغاة (كما في المبيعات والتحصيلات) بلا حذف من السجل.
         $summary = $model->summary($sourceFilter, $from, $to);
+        $allSummary = $model->summary();
         $pager = $this->pagination($summary['count'], 30);
 
         $transactions = $model->listing($pager['perPage'], $pager['offset'], $sourceFilter, $from, $to);
@@ -33,7 +35,7 @@ final class CashController extends Controller
             'openingBalance' => CashService::openingBalance(),
             'periodTotals' => ['in' => $summary['in'], 'out' => $summary['out']],
             'balance' => CashService::balance(),
-            'allTotals' => CashService::totals(),
+            'allTotals' => ['in' => $allSummary['in'], 'out' => $allSummary['out']],
             'rangeError' => $rangeError,
         ]);
     }

@@ -33,6 +33,21 @@ final class CashTransaction extends Model
         );
     }
 
+    /**
+     * شرط SQL لاستبعاد أثر العمليات الملغاة من **الأرقام** بلا حذفها من سجل الحركات:
+     * الحركة العكسية (لا تُنشأ إلا عند الإلغاء)، ومقبوضات فاتورة أصبحت ملغاة، وتحصيل أصبح معكوسًا —
+     * فتطابق أرقام الصندوق أرقام المبيعات والتحصيلات الفعلية. الرصيد الفعلي لا يتغيّر
+     * لأن كل حركة مُستبعدة تقابلها حركة عكسية مُستبعدة بالمثل.
+     */
+    public static function excludeCancelledSql(string $alias = ''): string
+    {
+        $prefix = $alias !== '' ? $alias . '.' : '';
+
+        return 'NOT (' . $prefix . "source = 'reversal'"
+            . ' OR (' . $prefix . "reference_type = 'sale' AND " . $prefix . 'reference_id IN (SELECT id FROM sales WHERE status = \'cancelled\'))'
+            . ' OR (' . $prefix . "reference_type = 'collection' AND " . $prefix . 'reference_id IN (SELECT id FROM collections WHERE status = \'reversed\')))';
+    }
+
     /** إجماليات الفترة (حدود شاملة: من بداية «من» إلى ما قبل بداية اليوم التالي لـ«إلى»). */
     public function totals(?string $from = null, ?string $to = null): array
     {
@@ -44,17 +59,22 @@ final class CashTransaction extends Model
     /**
      * ملخّص مطابق لنفس الفلاتر (المصدر + الفترة): العدد والإجماليات والتفصيل حسب المصدر،
      * فلا يختلف إجمالي الفترة أو ترقيم الصفحات عن السجلات الفعلية المطابقة.
+     * **الإجماليات والتفصيل حسب المصدر يستبعدان أثر العمليات الملغاة** (مطابقةً لقائمة المبيعات
+     * والتقارير)، أما العدد فيبقى لكل الحركات لأن السجل يعرضها كاملة.
      * @return array{count:int,in:float,out:float,bySource:array<int,array<string,mixed>>}
      */
     public function summary(?string $source = null, ?string $from = null, ?string $to = null): array
     {
         [$where, $params] = $this->buildFilters($source, $from, $to);
+        $figuresWhere = $where . ' AND ' . self::excludeCancelledSql();
+
+        $count = (int) Database::scalar('SELECT COUNT(*) FROM cash_transactions WHERE ' . $where, $params);
 
         $row = Database::one(
-            "SELECT COUNT(*) AS c,
+            "SELECT
                 COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
                 COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
-             FROM cash_transactions WHERE " . $where,
+             FROM cash_transactions WHERE " . $figuresWhere,
             $params
         ) ?? [];
 
@@ -62,12 +82,12 @@ final class CashTransaction extends Model
             "SELECT source,
                 COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
                 COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
-             FROM cash_transactions WHERE " . $where . ' GROUP BY source ORDER BY source ASC',
+             FROM cash_transactions WHERE " . $figuresWhere . ' GROUP BY source ORDER BY source ASC',
             $params
         );
 
         return [
-            'count' => (int) ($row['c'] ?? 0),
+            'count' => $count,
             'in' => round((float) ($row['cash_in'] ?? 0), 2),
             'out' => round((float) ($row['cash_out'] ?? 0), 2),
             'bySource' => $bySource,
