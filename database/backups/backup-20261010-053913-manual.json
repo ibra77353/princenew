@@ -1,0 +1,151 @@
+{
+    "meta": {
+        "app": "prince-net",
+        "version": 1,
+        "created_at": "2026-10-10 05:39:13",
+        "created_by": "Ibrahim Abed",
+        "label": "manual",
+        "tables": [
+            "users",
+            "packages",
+            "inventory_stock",
+            "inventory_movements",
+            "distributors",
+            "sales",
+            "sale_items",
+            "collections",
+            "lines",
+            "line_payments",
+            "expenses",
+            "owner_withdrawals",
+            "cash_transactions",
+            "settings",
+            "audit_logs",
+            "backups"
+        ]
+    },
+    "data": {
+        "users": [
+            {
+                "id": 1,
+                "name": "Ibrahim Abed",
+                "email": "ibrabra651@gmail.com",
+                "username": "ibra77353",
+                "password_hash": "$2y$12$olJuzeBMfnP2C0CSoGjSFe72lJ.qhh2piX91YlOnkLS28wmuSObh6",
+                "role": "admin",
+                "status": "active",
+                "last_login_at": "2026-10-10 05:38:50",
+                "created_at": "2026-10-10 02:51:38",
+                "updated_at": "2026-10-10 02:51:38"
+            }
+        ],
+        "packages": [
+            {
+                "id": 1,
+                "name": "100",
+                "price": "100.00",
+                "data_mb": 350,
+                "hours": 5,
+                "color": "#2563eb",
+                "status": "active",
+                "description": null,
+                "created_at": "2026-10-10 02:03:11",
+                "updated_at": "2026-10-10 02:03:11"
+            },
+            {
+                "id": 2,
+                "name": "200",
+                "price": "200.00",
+                "data_mb": 700,
+                "hours": 10,
+                "color": "#0ea5e9",
+                "status": "active",
+                "description": null,
+                "created_at": "2026-10-10 02:03:11",
+                "updated_at": "2026-10-10 02:03:11"
+            },
+            {
+                "id": 3,
+                "name": "250",
+                "price": "250.00",
+                "data_mb": 800,
+                "hours": 12,
+                "color": "#10b981",
+                "status": "active",
+                "description": null,
+                "created_at": "2026-10-10 02:03:11",
+                "updated_at": "2026-10-10 02:03:11"
+            },
+            {
+                "id": 4,
+                "name": "500",
+                "price": "500.00",
+                "data_mb": 2000,
+                "hours": 30,
+                "color": "#f59e0b",
+                "status": "active",
+                "description": null,
+                "created_at": "2026-10-10 02:03:11",
+                "updated_at": "2026-10-10 02:03:11"
+            },
+            {
+                "id": 5,
+                "name": "1000",
+                "price": "1000.00",
+                "data_mb": 4000,
+                "hours": 60,
+                "color": "#8b5cf6",
+                "status": "active",
+                "description": null,
+                "created_at": "2026-10-10 02:03:11",
+                "updated_at": "2026-10-10 02:03:11"
+            }
+        ],
+        "inventory_stock": [],
+        "inventory_movements": [],
+        "distributors": [],
+        "sales": [],
+        "sale_items": [],
+        "collections": [],
+        "lines": [],
+        "line_payments": [],
+        "expenses": [],
+        "owner_withdrawals": [],
+        "cash_transactions": [],
+        "settings": [
+            {
+                "id": 1,
+                "network_name": "شبكة البرنس",
+                "currency": "YER",
+                "currency_symbol": "ر.ي",
+                "admin_email": null,
+                "opening_balance": "0.00",
+                "low_stock_threshold": 10,
+                "updated_at": "2026-10-10 02:03:11"
+            }
+        ],
+        "audit_logs": [
+            {
+                "id": 47,
+                "user_id": null,
+                "user_name": "مستخدم",
+                "action": "login_failed",
+                "entity_type": "auth",
+                "entity_id": null,
+                "details": "محاولة دخول فاشلة: ibrabra651@gmail.com",
+                "created_at": "2026-10-10 05:38:39"
+            },
+            {
+                "id": 48,
+                "user_id": 1,
+                "user_name": "Ibrahim Abed",
+                "action": "login",
+                "entity_type": "auth",
+                "entity_id": 1,
+                "details": "تسجيل دخول",
+                "created_at": "2026-10-10 05:38:50"
+            }
+        ],
+        "backups": []
+    }
+}
