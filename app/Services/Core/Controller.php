@@ -122,7 +122,11 @@ abstract class Controller
                 $target = $result;
             }
         } catch (\Throwable $e) {
-            $message = trim($e->getMessage());
+            // رسائل التحقق المقصودة تُعرض للمستخدم، أما الأخطاء التقنية (SQL، مسارات الملفات) فتُسجَّل فقط (M5)
+            $message = $e instanceof \PDOException ? '' : trim($e->getMessage());
+            if ($message === '' || !$e instanceof \RuntimeException) {
+                ErrorHandler::report($e);
+            }
             Flash::error($message !== '' ? $message : 'تعذر تنفيذ العملية. تحقق من البيانات وحاول مرة أخرى.');
             Flash::withOld($this->post());
         }

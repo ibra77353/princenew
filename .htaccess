@@ -5,6 +5,9 @@
     # إذا كان التطبيق داخل مجلد فرعي، اضبط RewriteBase على اسم المجلد
     RewriteBase /
 
+    # حماية الشيفرة والإعدادات والسجلات ومجلدات النظام — لا تُقدَّم من الويب إطلاقًا (M4)
+    RewriteRule ^(app|config|database|tools|vendor|logs|storage|node_modules|\.git|\.base44)(/|$) - [F,L]
+
     # لا تعِد كتابة الملفات والأصول الموجودة فعليًا
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
@@ -18,7 +21,12 @@
 Options -Indexes
 
 # حماية الملفات والمجلدات الحساسة (احتياط إضافي فوق ملفات .htaccess الداخلية)
-<FilesMatch "\.(sql|json|md|log|ini|bak|zip)$">
+<FilesMatch "\.(sql|json|md|log|ini|bak|zip|yml|yaml|env|lock|sh|dist|conf|sqlite)$">
+    Require all denied
+</FilesMatch>
+
+# ملفات الإعداد والنظام بلا امتداد معروف
+<FilesMatch "^(Dockerfile.*|docker-compose.*|composer\.(json|lock)|\.git.*|\.env.*)$">
     Require all denied
 </FilesMatch>
 

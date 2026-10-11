@@ -58,7 +58,10 @@ final class Auth
     {
         try {
             $count = (int) Database::scalar('SELECT COUNT(*) FROM users');
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            // قاعدة البيانات غير متاحة: تظهر شاشة الإعداد الأول، وتُسجَّل التفاصيل داخليًا (M5)
+            ErrorHandler::report($e);
+
             return true;
         }
 

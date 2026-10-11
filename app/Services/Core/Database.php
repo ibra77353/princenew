@@ -48,6 +48,8 @@ final class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
                 PDO::ATTR_STRINGIFY_FETCHES => false,
+                // انقطاع قاعدة البيانات يجب أن يفشل سريعًا ويُعرض كخطأ معالج، لا أن يعلّق الصفحة (M5)
+                PDO::ATTR_TIMEOUT => 5,
             ]);
         } catch (PDOException $e) {
             throw new RuntimeException(

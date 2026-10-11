@@ -31,6 +31,9 @@ spl_autoload_register(static function (string $class): void {
 
 require BASE_PATH . '/app/Services/Core/helpers.php';
 
+// معالجة الأخطاء أولًا: لا تُعرض تفاصيل داخلية للمستخدم مهما حدث بعد ذلك (M5)
+\App\Services\Core\ErrorHandler::register($config['app']);
+
 \App\Services\Core\Database::configure($config['database']);
 \App\Services\Core\Setting::configure($config);
 

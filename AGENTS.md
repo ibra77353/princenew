@@ -89,10 +89,41 @@ docker compose -f docker-compose.base44.yml exec -T db mysql -u root -pprince_ro
   غير متوقع يُرجِع قاعدة البيانات بالكامل إلى حالتها.
 - نسخة قديمة بصيغة v1 (بلا `inventory_stock`) تبقى قابلة للاستعادة، ويُعاد بناء الرصيد بعدها.
 
-### 5. الحماية
-- `.htaccess` في الجذر يحوّل كل الطلبات إلى `index.php` ويمنع الوصول إلى `\.(sql|json|md|log|ini|bak|zip)$`.
-- لذلك أي ملف توثيقي/JSON داخل المستودع غير متاح من الويب (بما فيه `database/` و`config/`).
+### 5. الحماية (M4: حماية الملفات)
+- `.htaccess` في الجذر يحوّل كل الطلبات إلى `index.php`، ويمنع **صراحة** المجلدات الحساسة
+  (`app`, `config`, `database`, `tools`, `vendor`, `logs`, `storage`, `.git`, `.base44`) برد **403**
+  حتى لو كان الملف الموجود داخلها حقيقيًا — قبل قاعدة «لا تعِد كتابة الملفات الموجودة».
+- حجب الامتدادات: `sql|json|md|log|ini|bak|zip|yml|yaml|env|lock|sh|dist|conf|sqlite`،
+  وحجب ملفات الإعداد بلا امتداد معروف: `Dockerfile*`, `docker-compose*`, `composer.*`, `.git*`, `.env*`.
+- دفاع متعدد الطبقات: `.htaccess` داخلي بـ`Require all denied` في `app/` و`config/` و`database/` و`tools/`.
+  **قاعدة ذهبية:** كل مجلد شيفرة/إعدادات جديد يُضاف إلى قائمة الحجب الجذرية **و**يحصل على `.htaccess` داخلي.
+  المجلد الوحيد المتاح للويب هو `assets/`.
 - كلمات مرور المستخدمين تُخزَّن بـ `password_hash()`، وكل الطلبات المُغيِّرة للبيانات محمية بـ CSRF.
+- اختبار الحماية (شغّله بعد أي تعديل على `.htaccess`؛ يجب أن يبقى الوصول المشروع سليمًا):
+
+```bash
+# متوقع 403 لكل مسار حسّاس
+for p in "/.git/config" "/config/database.php" "/app/Views/errors/index.php" "/Dockerfile" \
+         "/docker-compose.base44.yml" "/database/schema.sql" "/.base44/environment.json" "/README.md"; do
+  echo "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000$p)  $p"
+done
+# متوقع 200 لكل أصل عام
+for p in "/login" "/assets/css/app.css" "/assets/js/app.js" "/assets/images/logo.svg"; do
+  echo "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000$p)  $p"
+done
+```
+
+### 5.1 معالجة الأخطاء وإخفاء التفاصيل (M5)
+- `App\Services\Core\ErrorHandler::register($config['app'])` يُستدعى في `index.php` **قبل** الاتصال بقاعدة
+  البيانات وأي شيء آخر: `display_errors=0` دائمًا و`log_errors=1`، مع معالجات للتحذيرات والاستثناءات
+  والأخطاء القاتلة. التفاصيل تُكتب في سجل Apache: `docker compose -f docker-compose.base44.yml logs web | grep -i error`.
+- المستخدم يرى صفحة عامة «حدث خطأ غير متوقع» بلا مسارات ملفات أو استعلامات أو بيانات اتصال.
+  `APP_DEBUG=1` يُظهر التفاصيل في الصفحة للمطوّر فقط (غير مُفعَّل في `docker-compose.base44.yml`).
+- `Controller::action()` لا يعرض رسائل `PDOException` أو `Error`/`TypeError` التقنية، بل يسجّلها ويُظهر
+  رسالة عامة، ويُبقي رسائل التحقق العربية المقصودة (مثل «توجد باقة بالاسم نفسه مسبقًا») كما هي.
+- `Database::pdo()` يضبط `PDO::ATTR_TIMEOUT = 5` حتى يفشل انقطاع قاعدة البيانات سريعًا (رسالة معالجة)
+  بدل تعليق الصفحة دقائق.
+- للتشخيص استخدم `ErrorHandler::report($e)` أو السجل؛ لا تُضِف `echo`/`var_dump`/`die` في الشيفرة.
 
 ### 6. ترميز النصوص العربية عند استخدام عميل `mysql`
 عميل `mysql` داخل الحاوية يعمل افتراضيًا بترميز **latin1** (`@@character_set_client = latin1`)، وعند تمرير نص عربي
