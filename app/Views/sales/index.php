@@ -7,7 +7,8 @@
  * @var int $total
  * @var array<string,float> $totals
  */
-$hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to'] !== '' || $filters['status'] !== '';
+// الحالة الافتراضية «نشطة» فلا تُعد تصفية اختارها المستخدم.
+$hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to'] !== '' || $filters['status'] !== 'active';
 ?>
 <div class="page-header">
     <div>
@@ -23,11 +24,11 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
         <span class="stat__value"><?= e((string) $total) ?></span>
     </div>
     <div class="stat">
-        <span class="stat__title">إجمالي المبيعات النشطة</span>
+        <span class="stat__title">إجمالي المبيعات (المطابقة للتصفية)</span>
         <span class="stat__value"><?= e(money($totals['all'])) ?></span>
     </div>
     <div class="stat">
-        <span class="stat__title">المدفوع من المبيعات النشطة</span>
+        <span class="stat__title">المدفوع من المبيعات (المطابقة للتصفية)</span>
         <span class="stat__value text-success"><?= e(money($totals['paid'])) ?></span>
     </div>
     <div class="stat">

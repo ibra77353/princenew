@@ -75,6 +75,12 @@ final class Sale extends Model
             return 0.0;
         }
 
+        // الفاتورة الملغاة لا متبقي عليها: الإلغاء يُلغي الالتزام ويُعكس المدفوع والتحصيلات،
+        // فإرجاع المتبقي المحسوب لفاتورة ملغاة كان يعرض مبلغًا وهميًا في شاشة الفاتورة.
+        if ($row['status'] !== 'active') {
+            return 0.0;
+        }
+
         return round((float) $row['total_amount'] - (float) $row['paid_amount'] - (float) $row['collected'], 2);
     }
 

@@ -21,7 +21,10 @@ final class SalesController extends Controller
             'term' => $this->str('q'),
             'from' => $from,
             'to' => $to,
-            'status' => $this->str('status'),
+            // الحالة الافتراضية «نشطة»، و«الكل» قيمة صالحة (تُرسل فارغة) — كانت القائمة
+            // تجمع الفواتير الملغاة داخل بطاقات معنونة «النشطة» فتظهر إجماليات عُكست لاحقًا.
+            // لا تُستخدم str() هنا لأنها تُرجع القيمة الافتراضية عند الفراغ فلا يمكن تمثيل «الكل».
+            'status' => self::normalizeStatus($_GET['status'] ?? null),
         ];
 
         $model = new Sale();
@@ -42,6 +45,21 @@ final class SalesController extends Controller
             ],
             'rangeError' => $rangeError,
         ]);
+    }
+
+    /**
+     * تطبيع تصفية الحالة: الافتراضي «نشطة» عند غياب المعامل، و«الكل» تُرسل فارغة،
+     * وأي قيمة غير معروفة تُعامل كـ«الكل» بلا تصفية.
+     */
+    private static function normalizeStatus(mixed $value): string
+    {
+        if ($value === null) {
+            return 'active';
+        }
+
+        $status = trim((string) $value);
+
+        return in_array($status, ['active', 'cancelled'], true) ? $status : '';
     }
 
     public function create(): void
