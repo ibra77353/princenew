@@ -249,7 +249,7 @@ $cash = $report['cash'];
 </div>
 
 <section class="mb-4">
-    <h3 class="section-title"><?= icon('chart') ?> التدفق النقدي حسب المصدر</h3>
+    <h3 class="section-title"><?= icon('chart') ?> التدفق النقدي حسب المصدر (بدون الملغاة)</h3>
     <div class="table-wrap">
         <table class="table">
             <thead><tr><th>المصدر</th><th>مقبوضات</th><th>مدفوعات</th><th>الصافي</th></tr></thead>
@@ -274,7 +274,11 @@ $cash = $report['cash'];
             </tfoot>
         </table>
     </div>
-    <p class="hint mt-2">رصيد الصندوق الحالي: <?= e(money($cash['balance'])) ?></p>
+    <p class="hint mt-2">
+        رصيد الصندوق الحالي: <?= e(money($cash['balance'])) ?> — أرقام التدفق تستبعد أثر الفواتير
+        والتحصيلات الملغاة والمعكوسة (كشاشة الصندوق ولوحة التحكم)، وكل الحركات الأصلية والعكسية
+        تبقى في سجل الصندوق وسجل التدقيق بلا حذف.
+    </p>
 </section>
 
 <div class="grid grid--two">

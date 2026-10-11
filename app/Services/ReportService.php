@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\CashTransaction;
 use App\Models\Distributor;
 use App\Models\InventoryMovement;
 use App\Models\Sale;
@@ -270,6 +271,9 @@ final class ReportService
      * التدفق النقدي من حركات الصندوق الفعلية مع تفصيل المصادر.
      * الإجماليات تُجمع من تفصيل المصادر نفسه (نفس الشروط)، والحركات العكسية تظهر
      * مرة واحدة بحسب تاريخها ولا تُحتسب مرتين. الرصيد الكلي منفصل عن تدفق الفترة.
+     * **الأرقام تستبعد أثر الفواتير والتحصيلات الملغاة/المعكوسة** بنفس شرط شاشة الصندوق
+     * ولوحة التحكم (`CashTransaction::excludeCancelledSql()`) عبر `$figuresSql`؛ والحركة الصحيحة
+     * غير المرتبطة بمرجع لا تُستبعد. أما `rows` فتبقى كاملة بلا استبعاد ولا حذف (سجل الحركات).
      * @param array<string,mixed> $filters
      */
     private static function cash(array $filters): array
@@ -278,12 +282,13 @@ final class ReportService
         $params = [];
         DateRange::apply($where, $params, 'transaction_date', $filters['from'], $filters['to']);
         $sql = implode(' AND ', $where);
+        $figuresSql = $sql . ' AND ' . CashTransaction::excludeCancelledSql();
 
         $bySource = Database::all(
             "SELECT source,
                 COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
                 COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
-             FROM cash_transactions WHERE " . $sql . ' GROUP BY source ORDER BY source ASC',
+             FROM cash_transactions WHERE " . $figuresSql . ' GROUP BY source ORDER BY source ASC',
             $params
         );
 
