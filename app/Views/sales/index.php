@@ -76,8 +76,10 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
     </div>
 <?php else: ?>
     <div class="record-list">
+        <?php $salesModel = new \App\Models\Sale(); // مصدر واحد للمتبقي في كل الشاشات ?>
         <?php foreach ($sales as $sale): ?>
-            <?php $remaining = (float) $sale['total_amount'] - (float) $sale['paid_amount'] - (float) \App\Services\Core\Database::scalar("SELECT COALESCE(SUM(amount),0) FROM collections WHERE sale_id = ? AND status = 'active'", [$sale['id']]); ?>
+            <?php // Sale::remaining تُرجع صفرًا للفاتورة الملغاة، فيطابق عرض القائمة صفحةَ الفاتورة (تحت «الكل» و«ملغاة») ?>
+            <?php $remaining = $salesModel->remaining((int) $sale['id']); ?>
             <article class="card card--pad record">
                 <div class="record__head">
                     <div>
