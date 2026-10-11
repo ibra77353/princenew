@@ -76,6 +76,7 @@
                             <?= icon('receipt') ?> كشف حساب
                         </a>
                         <button type="button" class="btn btn--outline btn--sm" data-fill="distributor-edit"
+                                data-action="<?= e(url('/distributors')) ?>/{id}/update"
                                 data-values='<?= e(json_encode([
                                     'id' => (int) $distributor['id'],
                                     'name' => $distributor['name'],
@@ -143,19 +144,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    (function () {
-        var modal = document.getElementById('distributor-edit');
-        if (!modal) { return; }
-        modal.addEventListener('click', function (event) {
-            var trigger = event.target.closest('[data-fill="distributor-edit"]');
-            if (!trigger) { return; }
-            var id = JSON.parse(trigger.getAttribute('data-values') || '{}').id;
-            var form = document.getElementById('distributor-edit-form');
-            if (form && id) {
-                form.action = <?= json_encode(url('/distributors')) ?> + '/' + id + '/update';
-            }
-        }, true);
-    })();
-</script>

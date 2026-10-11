@@ -145,6 +145,18 @@
                 field.value = payload[name] === null ? "" : payload[name];
             }
         });
+        // قالب المسار (مثل "/packages/{id}/update") يوجّه النموذج إلى السجل المحدد.
+        var actionTemplate = trigger.getAttribute("data-action");
+        if (actionTemplate) {
+            var form = modal.querySelector("form");
+            if (form) {
+                form.action = actionTemplate.replace(/\{(\w+)\}/g, function (placeholder, key) {
+                    return payload[key] === undefined || payload[key] === null
+                        ? placeholder
+                        : encodeURIComponent(String(payload[key]));
+                });
+            }
+        }
         openModal(modalId);
     });
 

@@ -100,6 +100,7 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
                         <a class="btn btn--outline btn--sm" href="<?= e(url('/sales/' . $sale['id'])) ?>"><?= icon('printer') ?> فاتورة</a>
                         <?php if ($sale['status'] === 'active'): ?>
                             <button type="button" class="btn btn--soft-danger btn--sm" data-fill="sale-cancel"
+                                    data-action="<?= e(url('/sales')) ?>/{sale_id}/cancel"
                                     data-values='<?= e(json_encode([
                                         'sale_id' => (int) $sale['id'],
                                         'invoice_number' => $sale['invoice_number'],
@@ -147,19 +148,3 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
         </div>
     </div>
 </div>
-
-<script>
-    (function () {
-        var modal = document.getElementById('sale-cancel');
-        if (!modal) { return; }
-        modal.addEventListener('click', function (event) {
-            var trigger = event.target.closest('[data-fill="sale-cancel"]');
-            if (!trigger) { return; }
-            var id = JSON.parse(trigger.getAttribute('data-values') || '{}').sale_id;
-            var form = document.getElementById('sale-cancel-form');
-            if (form && id) {
-                form.action = <?= json_encode(url('/sales')) ?> + '/' + id + '/cancel';
-            }
-        }, true);
-    })();
-</script>

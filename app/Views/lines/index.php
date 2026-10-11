@@ -50,6 +50,7 @@
                 <div class="btn-group mt-3">
                     <a class="btn btn--outline btn--sm" href="<?= e(url('/lines/' . $line['id'])) ?>"><?= icon('history') ?> التفاصيل</a>
                     <button type="button" class="btn btn--outline btn--sm" data-fill="line-edit"
+                            data-action="<?= e(url('/lines')) ?>/{id}/update"
                             data-values='<?= e(json_encode([
                                 'id' => (int) $line['id'],
                                 'name' => $line['name'],
@@ -116,19 +117,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    (function () {
-        var modal = document.getElementById('line-edit');
-        if (!modal) { return; }
-        modal.addEventListener('click', function (event) {
-            var trigger = event.target.closest('[data-fill="line-edit"]');
-            if (!trigger) { return; }
-            var id = JSON.parse(trigger.getAttribute('data-values') || '{}').id;
-            var form = document.getElementById('line-edit-form');
-            if (form && id) {
-                form.action = <?= json_encode(url('/lines')) ?> + '/' + id + '/update';
-            }
-        }, true);
-    })();
-</script>

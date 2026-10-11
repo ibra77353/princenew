@@ -47,6 +47,7 @@
 
                 <div class="btn-group mt-3">
                     <button type="button" class="btn btn--outline btn--sm" data-fill="package-edit"
+                            data-action="<?= e(url('/packages')) ?>/{id}/update"
                             data-values='<?= e(json_encode([
                                 'id' => (int) $package['id'],
                                 'name' => $package['name'],
@@ -122,20 +123,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    // توجيه نموذج التعديل إلى مسار الباقة المحددة
-    (function () {
-        var modal = document.getElementById('package-edit');
-        if (!modal) { return; }
-        modal.addEventListener('click', function (event) {
-            var trigger = event.target.closest('[data-fill="package-edit"]');
-            if (!trigger) { return; }
-            var id = JSON.parse(trigger.getAttribute('data-values') || '{}').id;
-            var form = document.getElementById('package-edit-form');
-            if (form && id) {
-                form.action = <?= json_encode(url('/packages')) ?> + '/' + id + '/update';
-            }
-        }, true);
-    })();
-</script>
