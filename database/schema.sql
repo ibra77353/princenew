@@ -276,6 +276,18 @@ CREATE TABLE IF NOT EXISTS backups (
     CONSTRAINT fk_backups_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ── رموز منع تكرار الطلبات (M13) ────────────────────────────────────────────
+-- رمز فريد لكل عرض نموذج مالي/مخزني، يُسجَّل داخل معاملة العملية نفسها، فتُرفض
+-- إعادة إرسال الطلب قبل إنشاء أي فاتورة أو خصم مخزون أو حركة صندوق.
+-- جدول تشغيلي مؤقت لا يدخل النسخ الاحتياطي، وتُنظَّف رموزه القديمة دوريًا.
+CREATE TABLE IF NOT EXISTS request_tokens (
+    token      VARCHAR(64) NOT NULL,
+    scope      VARCHAR(40) NOT NULL,
+    created_at DATETIME    NOT NULL,
+    PRIMARY KEY (token),
+    KEY idx_request_tokens_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ── البيانات الأولية ────────────────────────────────────────────────────────
 -- الإعدادات الافتراضية
 INSERT IGNORE INTO settings (id, network_name, currency, currency_symbol, admin_email, opening_balance, low_stock_threshold, updated_at)

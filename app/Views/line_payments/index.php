@@ -53,6 +53,8 @@
     </div>
 </form>
 
+<?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
+
 <?php if ($payments === []): ?>
     <div class="card card--pad">
         <div class="empty-state">
@@ -103,6 +105,7 @@
         <div class="modal__body">
             <form method="post" action="<?= e(url('/line-payments')) ?>" class="stack">
                 <?= csrf_field() ?>
+                <?= request_field() ?>
                 <div class="field">
                     <label for="pay-line">الخط</label>
                     <select class="select" id="pay-line" name="line_id" required>

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\InventoryMovement;
 use App\Services\Core\Auth;
 use App\Services\Core\Database;
+use App\Services\Core\Idempotency;
 
 /**
  * حركات المخزون بالشدات: إضافة، بيع، إرجاع، وتسوية بالزيادة أو النقصان.
@@ -25,14 +26,18 @@ final class InventoryService
      * إضافة كمية إلى مخزون الباقة: تُجمع على الرصيد الحالي في صف واحد (لا سجل جديد لكل إضافة).
      * سعر الشدة يُعتمد من الباقة نفسها، وكل عملية تُنفَّذ داخل معاملة واحدة.
      */
-    public static function add(int $packageId, int $quantity, string $notes = ''): int
+    public static function add(int $packageId, int $quantity, string $notes = '', string $requestToken = ''): int
     {
         if ($quantity <= 0) {
             throw new \RuntimeException('كمية الشدات يجب أن تكون عددًا صحيحًا أكبر من صفر.');
         }
 
-        return Database::transaction(function () use ($packageId, $quantity, $notes): int {
-            $package = Database::one('SELECT * FROM packages WHERE id = ? LIMIT 1', [$packageId]);
+        return Database::transaction(function () use ($packageId, $quantity, $notes, $requestToken): int {
+            Idempotency::claim($requestToken, 'inventory_add');
+
+            // قفل صف الباقة يُسلسل الإضافة/التسوية مع أي بيع متزامن على الباقة نفسها (M12)،
+            // فلا يُخصم المخزون بناءً على رصيد قرأته عملية أخرى قبل التحديث.
+            $package = Database::one('SELECT * FROM packages WHERE id = ? LIMIT 1 FOR UPDATE', [$packageId]);
             if ($package === null) {
                 throw new \RuntimeException('الباقة غير موجودة.');
             }
@@ -61,7 +66,7 @@ final class InventoryService
     }
 
     /** تسوية المخزون إلى كمية مستهدفة مع تسجيل السبب. */
-    public static function adjust(int $packageId, int $targetQuantity, string $reason): int
+    public static function adjust(int $packageId, int $targetQuantity, string $reason, string $requestToken = ''): int
     {
         if ($targetQuantity < 0) {
             throw new \RuntimeException('الكمية المستهدفة غير صالحة.');
@@ -70,8 +75,10 @@ final class InventoryService
             throw new \RuntimeException('سبب التسوية مطلوب.');
         }
 
-        return Database::transaction(function () use ($packageId, $targetQuantity, $reason): int {
-            $package = Database::one('SELECT * FROM packages WHERE id = ? LIMIT 1', [$packageId]);
+        return Database::transaction(function () use ($packageId, $targetQuantity, $reason, $requestToken): int {
+            Idempotency::claim($requestToken, 'inventory_adjust');
+
+            $package = Database::one('SELECT * FROM packages WHERE id = ? LIMIT 1 FOR UPDATE', [$packageId]);
             if ($package === null) {
                 throw new \RuntimeException('الباقة غير موجودة.');
             }

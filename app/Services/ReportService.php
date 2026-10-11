@@ -5,48 +5,72 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Distributor;
-use App\Models\Expense;
 use App\Models\InventoryMovement;
 use App\Services\Core\Database;
+use App\Services\Core\DateRange;
 
 /**
- * التقارير: تُحسب الإجماليات من كل السجلات المطابقة للفترة على الخادم،
+ * التقارير: تُحسب الإجماليات من **كل** السجلات المطابقة للفترة على الخادم،
  * وتُفصل المبيعات عن التدفق النقدي الفعلي.
+ *
+ * ضمانات إصلاح M7–M11:
+ * - الحدود الزمنية تُطبَّق عبر DateRange: تحقق من صحة التاريخ وحدود شاملة بلا فقد/تكرار.
+ * - نفس الفلاتر (الفترة + الموزع + الباقة + الحالة) تُطبَّق على الإجماليات وعلى الجداول
+ *   التفصيلية معًا، فلا يختلف المجموع المعروض عن السجلات الفعلية المطابقة.
+ * - إجمالي المصروفات وإجماليات الصندوق تُحسب من **نفس شروط** الصفوف والتصنيفات المعروضة.
+ * - الحركات العكسية تُقرأ من `cash_transactions` مرة واحدة حسب تاريخها، فلا تُحتسب مرتين.
  */
 final class ReportService
 {
     /**
-     * @param array{from:string,to:string,distributor_id:int,package_id:int,status:string} $filters
+     * @param array{from?:string,to?:string,distributor_id?:int,package_id?:int,status?:string} $filters
      */
     public static function build(array $filters): array
     {
-        $from = $filters['from'] ?? '';
-        $to = $filters['to'] ?? '';
-        $distributorId = (int) ($filters['distributor_id'] ?? 0);
-        $packageId = (int) ($filters['package_id'] ?? 0);
+        $filters = self::normalizeFilters($filters);
 
         return [
-            'range' => ['from' => $from, 'to' => $to],
-            'sales' => self::sales($from, $to, $distributorId),
-            'salesByPackage' => self::salesByPackage($from, $to, $packageId),
-            'collections' => self::collections($from, $to, $distributorId),
+            'range' => ['from' => $filters['from'] ?? '', 'to' => $filters['to'] ?? ''],
+            'sales' => self::sales($filters),
+            'salesByPackage' => self::salesByPackage($filters),
+            'collections' => self::collections($filters),
             'debts' => self::debts(),
-            'expenses' => self::expenses($from, $to),
-            'linePayments' => self::linePayments($from, $to),
-            'withdrawals' => self::withdrawals($from, $to),
-            'cash' => self::cash($from, $to),
+            'expenses' => self::expenses($filters),
+            'linePayments' => self::linePayments($filters),
+            'withdrawals' => self::withdrawals($filters),
+            'cash' => self::cash($filters),
             'inventory' => self::inventory(),
         ];
     }
 
-    public static function sales(string $from, string $to, int $distributorId = 0): array
+    /** @param array<string,mixed> $filters @return array<string,mixed> */
+    private static function normalizeFilters(array $filters): array
     {
-        $where = ["s.status = 'active'"];
+        $range = DateRange::normalize((string) ($filters['from'] ?? ''), (string) ($filters['to'] ?? ''));
+        $status = (string) ($filters['status'] ?? 'active');
+        if (!in_array($status, ['active', 'cancelled', 'all'], true)) {
+            $status = 'active';
+        }
+
+        return [
+            'from' => $range['from'],
+            'to' => $range['to'],
+            'distributor_id' => (int) ($filters['distributor_id'] ?? 0),
+            'package_id' => (int) ($filters['package_id'] ?? 0),
+            'status' => $status,
+        ];
+    }
+
+    /** @param array<string,mixed> $filters */
+    private static function sales(array $filters): array
+    {
+        $where = ['1 = 1'];
         $params = [];
-        self::applyRange($where, $params, 's.sale_date', $from, $to);
-        if ($distributorId > 0) {
-            $where[] = 's.distributor_id = ?';
-            $params[] = $distributorId;
+        self::applySalesScope($where, $params, $filters);
+        if ($filters['package_id'] > 0) {
+            // الباقة المفلترة تُطبَّق على الفاتورة نفسها، فيتوافق إجمالي المبيعات مع قسم المبيعات حسب الباقة.
+            $where[] = 'EXISTS (SELECT 1 FROM sale_items si WHERE si.sale_id = s.id AND si.package_id = ?)';
+            $params[] = $filters['package_id'];
         }
         $sql = implode(' AND ', $where);
 
@@ -73,14 +97,15 @@ final class ReportService
         ];
     }
 
-    public static function salesByPackage(string $from, string $to, int $packageId = 0): array
+    /** @param array<string,mixed> $filters */
+    private static function salesByPackage(array $filters): array
     {
-        $where = ["s.status = 'active'"];
+        $where = ['1 = 1'];
         $params = [];
-        self::applyRange($where, $params, 's.sale_date', $from, $to);
-        if ($packageId > 0) {
+        self::applySalesScope($where, $params, $filters);
+        if ($filters['package_id'] > 0) {
             $where[] = 'si.package_id = ?';
-            $params[] = $packageId;
+            $params[] = $filters['package_id'];
         }
 
         return Database::all(
@@ -96,22 +121,43 @@ final class ReportService
         );
     }
 
-    public static function collections(string $from, string $to, int $distributorId = 0): array
+    /**
+     * نطاق المبيعات المشترك (الفترة + الموزع + الحالة) عبر الجدولين `sales`/`sale_items`.
+     * @param array<int,string> $where @param array<int,mixed> $params @param array<string,mixed> $filters
+     */
+    private static function applySalesScope(array &$where, array &$params, array $filters, string $alias = 's'): void
     {
-        $where = ["c.status = 'active'"];
-        $params = [];
-        self::applyRange($where, $params, 'c.collection_date', $from, $to);
-        if ($distributorId > 0) {
-            $where[] = 'c.distributor_id = ?';
-            $params[] = $distributorId;
+        DateRange::apply($where, $params, $alias . '.sale_date', $filters['from'], $filters['to']);
+        if ($filters['distributor_id'] > 0) {
+            $where[] = $alias . '.distributor_id = ?';
+            $params[] = $filters['distributor_id'];
         }
-        $sql = implode(' AND ', $where);
+        if ($filters['status'] !== 'all') {
+            $where[] = $alias . '.status = ?';
+            $params[] = $filters['status'];
+        }
+    }
 
-        $total = (float) Database::scalar('SELECT COALESCE(SUM(c.amount), 0) FROM collections c WHERE ' . $sql, $params);
+    /** @param array<string,mixed> $filters */
+    private static function collections(array $filters): array
+    {
+        $where = ['1 = 1'];
+        $params = [];
+        DateRange::apply($where, $params, 'c.collection_date', $filters['from'], $filters['to']);
+        if ($filters['distributor_id'] > 0) {
+            $where[] = 'c.distributor_id = ?';
+            $params[] = $filters['distributor_id'];
+        }
+        $base = implode(' AND ', $where);
+
+        // التحصيلات الصالحة والمعكوسة تُحسبان من **نفس** الفترة والموزع، فيطابق الإجمالي الصفوف المعروضة.
+        $total = (float) Database::scalar(
+            'SELECT COALESCE(SUM(c.amount), 0) FROM collections c WHERE ' . $base . " AND c.status = 'active'",
+            $params
+        );
         $reversed = (float) Database::scalar(
-            "SELECT COALESCE(SUM(amount), 0) FROM collections WHERE status = 'reversed'
-             " . ($from !== '' ? " AND collection_date >= '" . date('Y-m-d 00:00:00', (int) strtotime($from)) . "'" : ''),
-            []
+            'SELECT COALESCE(SUM(c.amount), 0) FROM collections c WHERE ' . $base . " AND c.status = 'reversed'",
+            $params
         );
 
         return [
@@ -122,7 +168,8 @@ final class ReportService
                  FROM collections c
                  LEFT JOIN distributors d ON d.id = c.distributor_id
                  LEFT JOIN sales s ON s.id = c.sale_id
-                 WHERE ' . $sql . ' ORDER BY c.collection_date DESC, c.id DESC LIMIT 500',
+                 WHERE ' . $base . " AND c.status = 'active'"
+                 . ' ORDER BY c.collection_date DESC, c.id DESC LIMIT 500',
                 $params
             ),
         ];
@@ -147,15 +194,19 @@ final class ReportService
         return ['total' => round($total, 2), 'rows' => $rows];
     }
 
-    public static function expenses(string $from, string $to): array
+    /** @param array<string,mixed> $filters */
+    private static function expenses(array $filters): array
     {
         $where = ['1 = 1'];
         $params = [];
-        self::applyRange($where, $params, 'expense_date', $from, $to);
+        DateRange::apply($where, $params, 'expense_date', $filters['from'], $filters['to']);
         $sql = implode(' AND ', $where);
 
+        // الإجمالي من نفس شروط التصنيفات والصفوف المعروضة (لا مصدر حساب ثانٍ يختلف عنه).
+        $total = (float) Database::scalar('SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE ' . $sql, $params);
+
         return [
-            'total' => (new Expense())->total($from, $to),
+            'total' => round($total, 2),
             'byCategory' => Database::all(
                 'SELECT category, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count
                  FROM expenses WHERE ' . $sql . ' GROUP BY category ORDER BY total DESC',
@@ -168,11 +219,12 @@ final class ReportService
         ];
     }
 
-    public static function linePayments(string $from, string $to): array
+    /** @param array<string,mixed> $filters */
+    private static function linePayments(array $filters): array
     {
         $where = ['1 = 1'];
         $params = [];
-        self::applyRange($where, $params, 'lp.payment_date', $from, $to);
+        DateRange::apply($where, $params, 'lp.payment_date', $filters['from'], $filters['to']);
         $sql = implode(' AND ', $where);
 
         $total = (float) Database::scalar('SELECT COALESCE(SUM(lp.amount), 0) FROM line_payments lp WHERE ' . $sql, $params);
@@ -188,11 +240,12 @@ final class ReportService
         ];
     }
 
-    public static function withdrawals(string $from, string $to): array
+    /** @param array<string,mixed> $filters */
+    private static function withdrawals(array $filters): array
     {
         $where = ['1 = 1'];
         $params = [];
-        self::applyRange($where, $params, 'withdrawal_date', $from, $to);
+        DateRange::apply($where, $params, 'withdrawal_date', $filters['from'], $filters['to']);
         $sql = implode(' AND ', $where);
 
         $total = (float) Database::scalar('SELECT COALESCE(SUM(amount), 0) FROM owner_withdrawals WHERE ' . $sql, $params);
@@ -206,28 +259,40 @@ final class ReportService
         ];
     }
 
-    /** التدفق النقدي من حركات الصندوق الفعلية مع تفصيل المصادر. */
-    public static function cash(string $from, string $to): array
+    /**
+     * التدفق النقدي من حركات الصندوق الفعلية مع تفصيل المصادر.
+     * الإجماليات تُجمع من تفصيل المصادر نفسه (نفس الشروط)، والحركات العكسية تظهر
+     * مرة واحدة بحسب تاريخها ولا تُحتسب مرتين. الرصيد الكلي منفصل عن تدفق الفترة.
+     * @param array<string,mixed> $filters
+     */
+    private static function cash(array $filters): array
     {
         $where = ['1 = 1'];
         $params = [];
-        self::applyRange($where, $params, 'transaction_date', $from, $to);
+        DateRange::apply($where, $params, 'transaction_date', $filters['from'], $filters['to']);
         $sql = implode(' AND ', $where);
 
-        $totals = CashService::totals($from, $to);
+        $bySource = Database::all(
+            "SELECT source,
+                COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
+                COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
+             FROM cash_transactions WHERE " . $sql . ' GROUP BY source ORDER BY source ASC',
+            $params
+        );
+
+        $in = 0.0;
+        $out = 0.0;
+        foreach ($bySource as $row) {
+            $in += (float) $row['cash_in'];
+            $out += (float) $row['cash_out'];
+        }
 
         return [
-            'in' => $totals['in'],
-            'out' => $totals['out'],
-            'net' => round($totals['in'] - $totals['out'], 2),
+            'in' => round($in, 2),
+            'out' => round($out, 2),
+            'net' => round($in - $out, 2),
             'balance' => CashService::balance(),
-            'bySource' => Database::all(
-                "SELECT source,
-                    COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
-                    COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
-                 FROM cash_transactions WHERE " . $sql . ' GROUP BY source ORDER BY source ASC',
-                $params
-            ),
+            'bySource' => $bySource,
             'rows' => Database::all(
                 'SELECT * FROM cash_transactions WHERE ' . $sql . ' ORDER BY transaction_date DESC, id DESC LIMIT 500',
                 $params
@@ -246,18 +311,5 @@ final class ReportService
         }
 
         return ['total_value' => round($value, 2), 'total_units' => $units, 'rows' => $rows];
-    }
-
-    /** @param array<int,string> $where @param array<int,mixed> $params */
-    private static function applyRange(array &$where, array &$params, string $column, string $from, string $to): void
-    {
-        if ($from !== '') {
-            $where[] = $column . ' >= ?';
-            $params[] = $from . ' 00:00:00';
-        }
-        if ($to !== '') {
-            $where[] = $column . ' <= ?';
-            $params[] = $to . ' 23:59:59';
-        }
     }
 }

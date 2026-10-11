@@ -54,7 +54,7 @@ final class InventoryController extends Controller
             }
 
             // سعر الشدة يُعتمد من الباقة نفسها ولا يُقبل إدخال سعر مستقل.
-            InventoryService::add($packageId, (int) $quantity, $this->str('notes'));
+            InventoryService::add($packageId, (int) $quantity, $this->str('notes'), $this->requestId());
         }, '/inventory', 'تمت إضافة المخزون بنجاح.');
     }
 
@@ -77,7 +77,7 @@ final class InventoryController extends Controller
                 throw new \RuntimeException('سبب التسوية مطلوب.');
             }
 
-            InventoryService::adjust($packageId, (int) $target, $reason);
+            InventoryService::adjust($packageId, (int) $target, $reason, $this->requestId());
         }, '/inventory', 'تم تسجيل تسوية المخزون.');
     }
 }

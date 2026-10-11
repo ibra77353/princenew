@@ -5,25 +5,32 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Services\Core\Database;
+use App\Services\Core\DateRange;
 use App\Services\Core\Model;
 
 final class Sale extends Model
 {
     protected string $table = 'sales';
 
-    /** رقم الفاتورة التالي بصيغة PN-YYYYMM-0001. */
+    /**
+     * رقم الفاتورة التالي بصيغة PN-YYYYMM-0001.
+     *
+     * يُقرأ تحت **قفل تسلسلي** على صف الإعدادات داخل معاملة البيع، فلا تحصل عمليتان
+     * متزامنتان على الرقم نفسه (M12). يُحسب الرقم من أعلى تسلسل مسجّل للشهر الحالي
+     * لا من آخر صف بالمعرّف، فيبقى التسلسل صحيحًا حتى لو تغيّر ترتيب الإدخال.
+     */
     public function nextInvoiceNumber(): string
     {
+        Database::one('SELECT id FROM settings WHERE id = 1 FOR UPDATE');
+
         $prefix = 'PN-' . date('Ym') . '-';
-        $last = Database::scalar(
-            'SELECT invoice_number FROM sales WHERE invoice_number LIKE ? ORDER BY id DESC LIMIT 1',
+        $max = Database::scalar(
+            "SELECT MAX(CAST(SUBSTRING_INDEX(invoice_number, '-', -1) AS UNSIGNED))
+             FROM sales WHERE invoice_number LIKE ?",
             [$prefix . '%']
         );
 
-        $sequence = 1;
-        if (is_string($last) && preg_match('/(\d+)$/', $last, $m)) {
-            $sequence = (int) $m[1] + 1;
-        }
+        $sequence = ((int) $max) + 1;
 
         return $prefix . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
     }
@@ -105,15 +112,30 @@ final class Sale extends Model
     /** @param array<string,mixed> $filters */
     public function countFiltered(array $filters = []): int
     {
+        return $this->totalsFiltered($filters)['count'];
+    }
+
+    /**
+     * إجماليات مطابقة لنفس فلاتر القائمة (لا تعتمد على الصفحة المعروضة)،
+     * فلا يختلف المجموع المعروض عن السجلات الفعلية المطابقة للتصفية.
+     * @param array<string,mixed> $filters
+     * @return array{count:int,total:float,paid:float}
+     */
+    public function totalsFiltered(array $filters = []): array
+    {
         [$where, $params] = $this->buildFilters($filters);
         $row = Database::one(
             'SELECT COUNT(*) AS c, COALESCE(SUM(s.total_amount), 0) AS total, COALESCE(SUM(s.paid_amount), 0) AS paid
              FROM sales s LEFT JOIN distributors d ON d.id = s.distributor_id
              WHERE ' . $where,
             $params
-        );
+        ) ?? [];
 
-        return (int) ($row['c'] ?? 0);
+        return [
+            'count' => (int) ($row['c'] ?? 0),
+            'total' => round((float) ($row['total'] ?? 0), 2),
+            'paid' => round((float) ($row['paid'] ?? 0), 2),
+        ];
     }
 
     /** @param array<string,mixed> $filters @return array{0:string,1:array<int,mixed>} */
@@ -137,13 +159,9 @@ final class Sale extends Model
             $where[] = 's.status = ?';
             $params[] = $filters['status'];
         }
-        if (!empty($filters['from'])) {
-            $where[] = 's.sale_date >= ?';
-            $params[] = $filters['from'] . ' 00:00:00';
-        }
-        if (!empty($filters['to'])) {
-            $where[] = 's.sale_date <= ?';
-            $params[] = $filters['to'] . ' 23:59:59';
+        if (!empty($filters['from']) || !empty($filters['to'])) {
+            $range = DateRange::normalize((string) ($filters['from'] ?? ''), (string) ($filters['to'] ?? ''));
+            DateRange::apply($where, $params, 's.sale_date', $range['from'], $range['to']);
         }
 
         return [implode(' AND ', $where), $params];

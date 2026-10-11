@@ -93,6 +93,8 @@
     </div>
 </form>
 
+<?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
+
 <?php if ($transactions === []): ?>
     <div class="card card--pad">
         <div class="empty-state">

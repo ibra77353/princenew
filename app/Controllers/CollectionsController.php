@@ -15,21 +15,15 @@ final class CollectionsController extends Controller
     public function index(): void
     {
         $distributorId = $this->int('distributor_id');
-        $from = $this->str('from');
-        $to = $this->str('to');
+        ['from' => $from, 'to' => $to, 'error' => $rangeError] = $this->dateRange();
+        $distributorFilter = $distributorId > 0 ? $distributorId : null;
 
         $model = new Collection();
-        $total = (int) \App\Services\Core\Database::scalar('SELECT COUNT(*) FROM collections');
-        $pager = $this->pagination($total, 25);
+        // الإجماليات وعدد السجلات يُحسبان من نفس فلاتر التصفية، فلا يختلف المعروض عن الفعلي.
+        $totals = $model->totals($distributorFilter, $from, $to);
+        $pager = $this->pagination($totals['count'], 25);
 
-        $collections = $model->listing($pager['perPage'], $pager['offset'], $distributorId > 0 ? $distributorId : null, $from, $to);
-
-        $validTotal = (float) \App\Services\Core\Database::scalar(
-            "SELECT COALESCE(SUM(amount), 0) FROM collections WHERE status = 'active'"
-        );
-        $reversedTotal = (float) \App\Services\Core\Database::scalar(
-            "SELECT COALESCE(SUM(amount), 0) FROM collections WHERE status = 'reversed'"
-        );
+        $collections = $model->listing($pager['perPage'], $pager['offset'], $distributorFilter, $from, $to);
 
         $this->view('collections/index', [
             'title' => 'التحصيلات',
@@ -38,7 +32,8 @@ final class CollectionsController extends Controller
             'outstanding' => $this->outstandingSales(),
             'filters' => ['distributor_id' => $distributorId, 'from' => $from, 'to' => $to],
             'pager' => $pager,
-            'totals' => ['valid' => round($validTotal, 2), 'reversed' => round($reversedTotal, 2)],
+            'totals' => ['valid' => $totals['valid'], 'reversed' => $totals['reversed']],
+            'rangeError' => $rangeError,
         ]);
     }
 
@@ -53,6 +48,7 @@ final class CollectionsController extends Controller
                 'amount' => $this->moneyInput('amount'),
                 'collection_date' => $this->str('collection_date'),
                 'notes' => $this->str('notes'),
+                'request_id' => $this->requestId(),
             ]);
         }, '/collections', 'تم تسجيل التحصيل بنجاح.');
     }

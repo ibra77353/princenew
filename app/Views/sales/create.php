@@ -33,8 +33,9 @@ $currency = $settings['currency_symbol'] ?? 'ر.ي';
         </div>
     </div>
 <?php else: ?>
-    <form method="post" action="<?= e(url('/sales')) ?>" class="card card--pad stack" data-sale-form data-allow-repeat>
+    <form method="post" action="<?= e(url('/sales')) ?>" class="card card--pad stack" data-sale-form>
         <?= csrf_field() ?>
+        <?= request_field() ?>
 
         <div class="grid grid--form">
             <div class="field">

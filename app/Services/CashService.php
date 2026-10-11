@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Services\Core\Auth;
 use App\Services\Core\Database;
+use App\Services\Core\DateRange;
 use App\Services\Core\Setting;
 
 /**
@@ -105,24 +106,20 @@ final class CashService
         );
     }
 
-    /** إجماليات فترة محددة. */
+    /** إجماليات فترة محددة (حدود شاملة بلا فقد أو تكرار عند حدّ اليوم). */
     public static function totals(?string $from = null, ?string $to = null): array
     {
-        $sql = "SELECT
+        $where = ['1 = 1'];
+        $params = [];
+        DateRange::apply($where, $params, 'transaction_date', $from !== '' ? $from : null, $to !== '' ? $to : null);
+
+        $row = Database::one(
+            "SELECT
                 COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
                 COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
-             FROM cash_transactions WHERE 1 = 1";
-        $params = [];
-        if ($from !== null && $from !== '') {
-            $sql .= ' AND transaction_date >= ?';
-            $params[] = $from . ' 00:00:00';
-        }
-        if ($to !== null && $to !== '') {
-            $sql .= ' AND transaction_date <= ?';
-            $params[] = $to . ' 23:59:59';
-        }
-
-        $row = Database::one($sql, $params) ?? [];
+             FROM cash_transactions WHERE " . implode(' AND ', $where),
+            $params
+        ) ?? [];
 
         return [
             'in' => round((float) ($row['cash_in'] ?? 0), 2),

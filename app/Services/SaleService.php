@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Sale;
 use App\Services\Core\Auth;
 use App\Services\Core\Database;
+use App\Services\Core\Idempotency;
 
 /**
  * عمليات البيع والإلغاء.
@@ -16,7 +17,7 @@ use App\Services\Core\Database;
 final class SaleService
 {
     /**
-     * @param array{distributor_id:int, items:array<int,array{package_id:mixed,quantity:mixed}>, paid_amount:mixed, payment_type:string, sale_date:string, notes:string} $payload
+     * @param array{distributor_id:int, items:array<int,array{package_id:mixed,quantity:mixed}>, paid_amount:mixed, payment_type:string, sale_date:string, notes:string, request_id?:string} $payload
      * @return array<string,mixed> الفاتورة المنشأة
      */
     public static function create(array $payload): array
@@ -31,6 +32,10 @@ final class SaleService
         }
 
         return Database::transaction(function () use ($distributorId, $paymentType, $saleDate, $items, $payload) {
+            // منع تنفيذ الطلب المكرر/المعاد إرساله: يُحجز الرمز داخل المعاملة نفسها،
+            // فأي إعادة إرسال تُرفض قبل إنشاء فاتورة أو خصم مخزون أو حركة صندوق (M13).
+            Idempotency::claim((string) ($payload['request_id'] ?? ''), 'sale');
+
             $distributor = Database::one('SELECT * FROM distributors WHERE id = ? FOR UPDATE', [$distributorId]);
             if ($distributor === null) {
                 throw new \RuntimeException('الموزع غير موجود.');

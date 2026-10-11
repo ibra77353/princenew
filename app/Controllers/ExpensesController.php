@@ -15,14 +15,14 @@ final class ExpensesController extends Controller
     public function index(): void
     {
         $category = $this->str('category');
-        $from = $this->str('from');
-        $to = $this->str('to');
+        ['from' => $from, 'to' => $to, 'error' => $rangeError] = $this->dateRange();
+        $categoryFilter = $category !== '' ? $category : null;
 
         $model = new Expense();
-        $total = (int) Database::scalar('SELECT COUNT(*) FROM expenses');
-        $pager = $this->pagination($total, 25);
+        $count = $model->countFiltered($categoryFilter, $from, $to);
+        $pager = $this->pagination($count, 25);
 
-        $expenses = $model->listing($pager['perPage'], $pager['offset'], $category !== '' ? $category : null, $from, $to);
+        $expenses = $model->listing($pager['perPage'], $pager['offset'], $categoryFilter, $from, $to);
 
         $byCategory = Database::all(
             'SELECT category, COALESCE(SUM(amount), 0) AS total FROM expenses GROUP BY category ORDER BY total DESC'
@@ -35,8 +35,9 @@ final class ExpensesController extends Controller
             'byCategory' => $byCategory,
             'filters' => ['category' => $category, 'from' => $from, 'to' => $to],
             'pager' => $pager,
-            'total' => $model->total($from !== '' ? $from : null, $to !== '' ? $to : null),
+            'total' => $model->total($from !== '' ? $from : null, $to !== '' ? $to : null, $categoryFilter),
             'cashBalance' => CashService::balance(),
+            'rangeError' => $rangeError,
         ]);
     }
 
@@ -50,7 +51,8 @@ final class ExpensesController extends Controller
                 $this->moneyInput('amount'),
                 $this->str('description'),
                 $this->str('expense_date'),
-                $this->str('notes')
+                $this->str('notes'),
+                $this->requestId()
             );
         }, '/expenses', 'تم تسجيل المصروف وخصمه من الصندوق.');
     }

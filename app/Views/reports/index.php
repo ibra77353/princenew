@@ -66,10 +66,20 @@ $cash = $report['cash'];
             <?php endforeach; ?>
         </select>
     </div>
+    <div class="field">
+        <label for="r-status">حالة المبيعات</label>
+        <select class="select" id="r-status" name="status">
+            <option value="active" <?= ($filters['status'] ?? 'active') === 'active' ? 'selected' : '' ?>>النشطة فقط</option>
+            <option value="cancelled" <?= ($filters['status'] ?? '') === 'cancelled' ? 'selected' : '' ?>>الملغاة فقط</option>
+            <option value="all" <?= ($filters['status'] ?? '') === 'all' ? 'selected' : '' ?>>النشطة والملغاة</option>
+        </select>
+    </div>
     <div class="field self-end">
         <button type="submit" class="btn btn--primary"><?= icon('chart') ?> عرض التقرير</button>
     </div>
 </form>
+
+<?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
 
 <p class="text-sm text-muted mb-4">
     الفترة: <?= $filters['from'] !== '' ? e(fdate($filters['from'])) : 'من البداية' ?>

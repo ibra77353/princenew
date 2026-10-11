@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Services\Core\Auth;
 use App\Services\Core\Database;
+use App\Services\Core\Idempotency;
 use App\Services\Core\Setting;
 
 /**
@@ -16,7 +17,7 @@ use App\Services\Core\Setting;
  */
 final class OutflowService
 {
-    public static function recordExpense(string $category, float $amount, string $description, string $date, string $notes = ''): int
+    public static function recordExpense(string $category, float $amount, string $description, string $date, string $notes = '', string $requestToken = ''): int
     {
         if (!array_key_exists($category, \App\Models\Expense::CATEGORIES)) {
             throw new \RuntimeException('تصنيف المصروف غير صالح.');
@@ -30,7 +31,9 @@ final class OutflowService
 
         $date = self::normalizeDate($date);
 
-        return Database::transaction(function () use ($category, $amount, $description, $date, $notes) {
+        return Database::transaction(function () use ($category, $amount, $description, $date, $notes, $requestToken) {
+            Idempotency::claim($requestToken, 'expense');
+
             $id = Database::insert(
                 'INSERT INTO expenses (category, amount, description, notes, expense_date, created_at, created_by)
                  VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -44,7 +47,7 @@ final class OutflowService
         });
     }
 
-    public static function recordLinePayment(int $lineId, float $amount, string $date, string $notes = ''): int
+    public static function recordLinePayment(int $lineId, float $amount, string $date, string $notes = '', string $requestToken = ''): int
     {
         if ($amount <= 0) {
             throw new \RuntimeException('مبلغ الدفعة يجب أن يكون أكبر من صفر.');
@@ -57,7 +60,9 @@ final class OutflowService
 
         $date = self::normalizeDate($date);
 
-        return Database::transaction(function () use ($line, $lineId, $amount, $date, $notes) {
+        return Database::transaction(function () use ($line, $lineId, $amount, $date, $notes, $requestToken) {
+            Idempotency::claim($requestToken, 'line_payment');
+
             $id = Database::insert(
                 'INSERT INTO line_payments (line_id, amount, payment_date, notes, created_at, created_by)
                  VALUES (?, ?, ?, ?, ?, ?)',
@@ -71,7 +76,7 @@ final class OutflowService
         });
     }
 
-    public static function recordWithdrawal(float $amount, string $reason, string $date, string $notes = ''): int
+    public static function recordWithdrawal(float $amount, string $reason, string $date, string $notes = '', string $requestToken = ''): int
     {
         if ($amount <= 0) {
             throw new \RuntimeException('مبلغ السحب يجب أن يكون أكبر من صفر.');
@@ -82,7 +87,9 @@ final class OutflowService
 
         $date = self::normalizeDate($date);
 
-        return Database::transaction(function () use ($amount, $reason, $date, $notes) {
+        return Database::transaction(function () use ($amount, $reason, $date, $notes, $requestToken) {
+            Idempotency::claim($requestToken, 'owner_withdrawal');
+
             $id = Database::insert(
                 'INSERT INTO owner_withdrawals (amount, reason, notes, withdrawal_date, created_at, created_by)
                  VALUES (?, ?, ?, ?, ?, ?)',

@@ -165,6 +165,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
         <div class="modal__body">
             <form method="post" action="<?= e(url('/inventory/add')) ?>" class="stack">
                 <?= csrf_field() ?>
+                <?= request_field() ?>
                 <div class="field">
                     <label for="inv-package">الباقة</label>
                     <select class="select" id="inv-package" name="package_id" required>
@@ -209,6 +210,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
         <div class="modal__body">
             <form method="post" action="<?= e(url('/inventory/adjust')) ?>" class="stack">
                 <?= csrf_field() ?>
+                <?= request_field() ?>
                 <div class="field">
                     <label for="adj-package">الباقة</label>
                     <select class="select" id="adj-package" name="package_id" required>

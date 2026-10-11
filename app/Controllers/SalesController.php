@@ -15,33 +15,32 @@ final class SalesController extends Controller
 {
     public function index(): void
     {
+        ['from' => $from, 'to' => $to, 'error' => $rangeError] = $this->dateRange();
+
         $filters = [
             'term' => $this->str('q'),
-            'from' => $this->str('from'),
-            'to' => $this->str('to'),
+            'from' => $from,
+            'to' => $to,
             'status' => $this->str('status'),
         ];
 
         $model = new Sale();
-        $total = $model->countFiltered($filters);
-        $pager = $this->pagination($total, 25);
+        // إجماليات مطابقة لنفس فلاتر التصفية (لا تجمع كل المبيعات النشطة بغضّ النظر عن الفلاتر).
+        $totals = $model->totalsFiltered($filters);
+        $pager = $this->pagination($totals['count'], 25);
         $sales = $model->listing($filters, $pager['perPage'], $pager['offset']);
-
-        $sums = \App\Services\Core\Database::one(
-            "SELECT COALESCE(SUM(total_amount), 0) AS total, COALESCE(SUM(paid_amount), 0) AS paid
-             FROM sales WHERE status = 'active'"
-        ) ?? [];
 
         $this->view('sales/index', [
             'title' => 'المبيعات',
             'sales' => $sales,
             'filters' => $filters,
             'pager' => $pager,
-            'total' => $total,
+            'total' => $totals['count'],
             'totals' => [
-                'all' => round((float) ($sums['total'] ?? 0), 2),
-                'paid' => round((float) ($sums['paid'] ?? 0), 2),
+                'all' => $totals['total'],
+                'paid' => $totals['paid'],
             ],
+            'rangeError' => $rangeError,
         ]);
     }
 
@@ -78,6 +77,7 @@ final class SalesController extends Controller
                 'payment_type' => $this->str('payment_type', 'cash'),
                 'sale_date' => $this->str('sale_date'),
                 'notes' => $this->str('notes'),
+                'request_id' => $this->requestId(),
             ]);
 
             return '/sales/' . $sale['id'];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Services\Core\Database;
+use App\Services\Core\DateRange;
 use App\Services\Core\Model;
 
 final class CashTransaction extends Model
@@ -23,50 +24,53 @@ final class CashTransaction extends Model
 
     public function listing(int $limit = 200, int $offset = 0, ?string $source = null, ?string $from = null, ?string $to = null): array
     {
-        $where = ['1 = 1'];
-        $params = [];
-
-        if ($source !== null && $source !== '') {
-            $where[] = 'source = ?';
-            $params[] = $source;
-        }
-        if ($from !== null && $from !== '') {
-            $where[] = 'transaction_date >= ?';
-            $params[] = $from . ' 00:00:00';
-        }
-        if ($to !== null && $to !== '') {
-            $where[] = 'transaction_date <= ?';
-            $params[] = $to . ' 23:59:59';
-        }
+        [$where, $params] = $this->buildFilters($source, $from, $to);
 
         return Database::all(
-            'SELECT * FROM cash_transactions WHERE ' . implode(' AND ', $where) . '
+            'SELECT * FROM cash_transactions WHERE ' . $where . '
              ORDER BY transaction_date DESC, id DESC LIMIT ' . (int) $limit . ' OFFSET ' . (int) $offset,
             $params
         );
     }
 
+    /** إجماليات الفترة (حدود شاملة: من بداية «من» إلى ما قبل بداية اليوم التالي لـ«إلى»). */
     public function totals(?string $from = null, ?string $to = null): array
     {
-        $sql = "SELECT
+        $summary = $this->summary(null, $from, $to);
+
+        return ['in' => $summary['in'], 'out' => $summary['out']];
+    }
+
+    /**
+     * ملخّص مطابق لنفس الفلاتر (المصدر + الفترة): العدد والإجماليات والتفصيل حسب المصدر،
+     * فلا يختلف إجمالي الفترة أو ترقيم الصفحات عن السجلات الفعلية المطابقة.
+     * @return array{count:int,in:float,out:float,bySource:array<int,array<string,mixed>>}
+     */
+    public function summary(?string $source = null, ?string $from = null, ?string $to = null): array
+    {
+        [$where, $params] = $this->buildFilters($source, $from, $to);
+
+        $row = Database::one(
+            "SELECT COUNT(*) AS c,
                 COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
                 COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
-             FROM cash_transactions WHERE 1 = 1";
-        $params = [];
-        if ($from !== null && $from !== '') {
-            $sql .= ' AND transaction_date >= ?';
-            $params[] = $from . ' 00:00:00';
-        }
-        if ($to !== null && $to !== '') {
-            $sql .= ' AND transaction_date <= ?';
-            $params[] = $to . ' 23:59:59';
-        }
+             FROM cash_transactions WHERE " . $where,
+            $params
+        ) ?? [];
 
-        $row = Database::one($sql, $params) ?? [];
+        $bySource = Database::all(
+            "SELECT source,
+                COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
+                COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
+             FROM cash_transactions WHERE " . $where . ' GROUP BY source ORDER BY source ASC',
+            $params
+        );
 
         return [
+            'count' => (int) ($row['c'] ?? 0),
             'in' => round((float) ($row['cash_in'] ?? 0), 2),
             'out' => round((float) ($row['cash_out'] ?? 0), 2),
+            'bySource' => $bySource,
         ];
     }
 
@@ -82,5 +86,20 @@ final class CashTransaction extends Model
             'SELECT * FROM cash_transactions WHERE reference_type = ? AND reference_id = ? ORDER BY id ASC',
             [$referenceType, $referenceId]
         );
+    }
+
+    /** @return array{0:string,1:array<int,mixed>} */
+    private function buildFilters(?string $source, ?string $from, ?string $to): array
+    {
+        $where = ['1 = 1'];
+        $params = [];
+
+        if ($source !== null && $source !== '') {
+            $where[] = 'source = ?';
+            $params[] = $source;
+        }
+        DateRange::apply($where, $params, 'transaction_date', $from !== '' ? $from : null, $to !== '' ? $to : null);
+
+        return [implode(' AND ', $where), $params];
     }
 }

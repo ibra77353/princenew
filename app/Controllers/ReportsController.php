@@ -16,9 +16,10 @@ final class ReportsController extends Controller
         $period = $this->str('period', 'month');
         [$from, $to] = $this->resolvePeriod($period);
 
+        $rangeError = '';
         if ($period === 'custom') {
-            $from = $this->str('from');
-            $to = $this->str('to');
+            // التحقق من تواريخ الفترة المخصصة: قيمة غير صالحة لا تُنتج إجماليات مضلّلة (M7).
+            ['from' => $from, 'to' => $to, 'error' => $rangeError] = $this->dateRange();
         }
 
         $filters = [
@@ -26,12 +27,14 @@ final class ReportsController extends Controller
             'to' => $to,
             'distributor_id' => $this->int('distributor_id'),
             'package_id' => $this->int('package_id'),
+            'status' => $this->str('status', 'active'),
         ];
 
         $this->view('reports/index', [
             'title' => 'التقارير',
             'report' => ReportService::build($filters),
             'filters' => $filters,
+            'rangeError' => $rangeError,
             'period' => $period,
             'distributors' => (new Distributor())->active(),
             'packages' => (new Package())->ordered(),

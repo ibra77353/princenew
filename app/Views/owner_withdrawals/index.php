@@ -41,6 +41,8 @@
     </div>
 </form>
 
+<?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
+
 <?php if ($withdrawals === []): ?>
     <div class="card card--pad">
         <div class="empty-state">
@@ -89,6 +91,7 @@
         <div class="modal__body">
             <form method="post" action="<?= e(url('/owner-withdrawals')) ?>" class="stack">
                 <?= csrf_field() ?>
+                <?= request_field() ?>
                 <div class="grid grid--form">
                     <div class="field">
                         <label for="w-amount">المبلغ</label>

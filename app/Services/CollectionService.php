@@ -8,6 +8,7 @@ use App\Models\Distributor;
 use App\Models\Sale;
 use App\Services\Core\Auth;
 use App\Services\Core\Database;
+use App\Services\Core\Idempotency;
 
 /**
  * تحصيل الأموال من الموزعين مع التحقق من الدين المستحق على الخادم.
@@ -26,6 +27,9 @@ final class CollectionService
         }
 
         return Database::transaction(function () use ($distributorId, $saleId, $amount, $date, $payload) {
+            // حجز رمز الطلب داخل المعاملة: إعادة إرسال التحصيل لا تُنشئ حركة صندوق مكررة (M13).
+            Idempotency::claim((string) ($payload['request_id'] ?? ''), 'collection');
+
             $distributor = Database::one('SELECT * FROM distributors WHERE id = ? FOR UPDATE', [$distributorId]);
             if ($distributor === null) {
                 throw new \RuntimeException('الموزع غير موجود.');

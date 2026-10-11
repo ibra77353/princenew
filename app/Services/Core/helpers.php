@@ -154,6 +154,17 @@ if (!function_exists('csrf_field')) {
     }
 }
 
+if (!function_exists('request_field')) {
+    /**
+     * رمز فريد لكل عرض نموذج، يمنع تنفيذ الطلب المكرر عند إعادة الإرسال (M13).
+     * يُتحقَّق منه على الخادم داخل معاملة العملية (انظر Idempotency::claim).
+     */
+    function request_field(): string
+    {
+        return '<input type="hidden" name="_request_id" value="' . e(bin2hex(random_bytes(16))) . '">';
+    }
+}
+
 if (!function_exists('old')) {
     function old(string $key, mixed $default = ''): mixed
     {

@@ -53,6 +53,8 @@
     </div>
 </form>
 
+<?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
+
 <?php if ($collections === []): ?>
     <div class="card card--pad">
         <div class="empty-state">
@@ -118,6 +120,7 @@
                   data-collections-form
                   data-outstanding-url="<?= e(url('/collections/outstanding')) ?>">
                 <?= csrf_field() ?>
+                <?= request_field() ?>
 
                 <div class="field">
                     <label for="col-distributor">الموزع</label>

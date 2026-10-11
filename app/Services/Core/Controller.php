@@ -94,6 +94,28 @@ abstract class Controller
         Csrf::verify($_POST['_token'] ?? null);
     }
 
+    /** رمز منع تكرار الطلب المرافق للنموذج (فارغ للنماذج القديمة). */
+    protected function requestId(): string
+    {
+        return trim((string) ($_POST['_request_id'] ?? ''));
+    }
+
+    /**
+     * يقرأ حدّي الفترة من الطلب ويتحقق منهما (M7).
+     * عند قيمة غير صالحة يوضّح الخطأ ويُهمل الحدّ بدل إنتاج إجماليات خاطئة (فترة فارغة/كلية صامتة).
+     * @return array{from:string,to:string,error:string}
+     */
+    protected function dateRange(): array
+    {
+        try {
+            $range = DateRange::normalize($this->str('from'), $this->str('to'));
+
+            return ['from' => $range['from'] ?? '', 'to' => $range['to'] ?? '', 'error' => ''];
+        } catch (\RuntimeException $e) {
+            return ['from' => '', 'to' => '', 'error' => $e->getMessage()];
+        }
+    }
+
     /** تسجيل عملية إدارية في سجل التدقيق. */
     protected function audit(string $action, string $entityType, ?int $entityId, string $details = ''): void
     {

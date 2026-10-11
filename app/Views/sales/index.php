@@ -62,6 +62,8 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
     </div>
 </form>
 
+<?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
+
 <?php if ($sales === []): ?>
     <div class="card card--pad">
         <div class="empty-state">
