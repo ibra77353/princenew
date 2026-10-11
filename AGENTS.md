@@ -162,7 +162,9 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
 دورَان فقط ولا ثالث لهما، والقيمة المخزَّنة في `users.role = ENUM('admin','employee')`:
 
 - **`admin`** — صلاحية كاملة، بما فيها الإعدادات والنسخ الاحتياطي وإدارة المستخدمين وحذف السجلات الحساسة وإلغاء الفواتير.
-- **`employee`** — تشغيل محدود: مبيعات نقدية وآجلة، تحصيلات، مخزون، موزعون، خطوط ودفعاتها، مصروفات، صندوق وتقارير وبحث.
+- **`employee`** — تشغيل محدود: مبيعات نقدية وآجلة، تحصيلات، خطوط ودفعاتها، مصروفات، صندوق وتقارير وبحث.
+  أما **الباقات والمخزون والموزعون فـ«عرض فقط»** للموظف: يعرضها ويختار الموزع/الباقة في المبيعات والتحصيلات،
+  لكنه **لا** يضيف/يعدّل/يحذف فيها ولا يغيّر الأرصدة يدويًا. البيع يخصم المخزون وإلغاء الفاتورة (مدير) يُرجعه تلقائيًا.
 
 الفرض **على الخادم لا في الواجهة**: `Auth::ROLE_ADMIN`/`ROLE_EMPLOYEE` و`Auth::isAdmin()` و`Auth::requireAdmin()`
 (ترد 403 «هذه العملية متاحة للمدير فقط») في `app/Services/Core/Auth.php`، ويستدعيها وسيط `admin` في
@@ -171,6 +173,12 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
 - كل مسارات `/users` و`/settings` و`/backup` (تصدير/استعادة/تنزيل/حذف).
 - العمليات الحساسة (مسار مستقل لكل منها): `/packages/{id}/delete`, `/lines/{id}/delete`,
   `/distributors/{id}/delete`, `/sales/{id}/cancel`.
+- **إضافة/تعديل الباقات والمخزون والموزعين** (منع الموظف من تغيير البيانات الأساسية — طلب لاحق):
+  `POST /packages`, `POST /packages/{id}/update`, `POST /packages/{id}/toggle`,
+  `POST /inventory/add`, `POST /inventory/adjust`,
+  `POST /distributors`, `POST /distributors/{id}/update`.
+  مسارات العرض تبقى `$auth` لكل الأدوار: `GET /packages`, `GET /inventory`, `GET /distributors`, `GET /distributors/{id}`.
+- أي عملية إضافة/تعديل جديدة على هذه الوحدات يجب أن تُمنح الوسيط `$admin` **وإلا** صارت متاحة للموظف (الافتراضي `$auth`).
 
 قواعد الحماية الذاتية في `UsersController`: لا يغيّر المدير دوره، ولا يعطّل حسابه، ولا يحذفه، ولا يمكن إزالة دور
 المدير عن آخر حساب مدير نشط (منعًا لإقفال النظام). أي قيمة دور غير معروفة تُعالَج كـ`employee` (أقل صلاحية).
@@ -195,9 +203,24 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
 curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar http://localhost:3000/settings   # 403
 curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar http://localhost:3000/users      # 403
 curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar http://localhost:3000/sales      # 200
+curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar http://localhost:3000/packages   # 200 (عرض)
 ```
 الطلبات المُغيِّرة تُرفض بالوسيط قبل CSRF (403 بلا رمز)، وحتى إرسال طلب مباشر إلى `/users` بغرض إنشاء مدير
 أو رفع صلاحية لا يمرّ.
+
+**اختبار تقييد الموظف على البيانات الأساسية** (بعد إضافة/تعديل الباقات والمخزون والموزعين إلى `$admin`):
+الحماية تُختبر **برمز CSRF صحيح** للتأكد أن الرفض سببُه الدور لا الرمز — المتوقع 403 برسالة
+«هذه العملية متاحة للمدير فقط» لكل مسار أدناه بحساب موظف، و302 للمسارات التشغيلية:
+
+```bash
+E=http://localhost:3000
+for p in /packages /packages/1/update /packages/1/toggle /packages/1/delete \
+         /inventory/add /inventory/adjust /distributors /distributors/1/update /distributors/1/delete; do
+  echo "$(curl -s -o /dev/null -w '%{http_code}' -b emp.jar -X POST "$E$p" --data-urlencode "_token=$TOKEN")  POST $p"   # 403
+done
+curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar -X POST "$E/sales" --data-urlencode "_token=$TOKEN"      # 302 (لا 403)
+```
+(`$TOKEN` = رمز CSRF من صفحة داخل الجلسة، مثل نموذج تسجيل الخروج في القائمة الجانبية.)
 
 ---
 

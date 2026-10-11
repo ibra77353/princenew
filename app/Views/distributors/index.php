@@ -9,9 +9,11 @@
 <div class="page-header">
     <div>
         <h1>إدارة الموزعين</h1>
-        <p>إدارة بيانات الموزعين وكشوف الحسابات.</p>
+        <p><?= is_admin() ? 'إدارة بيانات الموزعين وكشوف الحسابات.' : 'عرض الموزعين وكشوف حساباتهم. الإضافة والتعديل متاحة للمدير فقط.' ?></p>
     </div>
-    <button type="button" class="btn btn--primary" data-modal-open="distributor-create"><?= icon('plus') ?> موزع جديد</button>
+    <?php if (is_admin()): ?>
+        <button type="button" class="btn btn--primary" data-modal-open="distributor-create"><?= icon('plus') ?> موزع جديد</button>
+    <?php endif; ?>
 </div>
 
 <form method="get" action="<?= e(url('/distributors')) ?>" class="filters">
@@ -40,8 +42,10 @@
         <div class="empty-state">
             <div class="empty-state__icon"><?= icon('users') ?></div>
             <h2><?= $term !== '' ? 'لا توجد نتائج مطابقة' : 'لا يوجد موزعون' ?></h2>
-            <p><?= $term !== '' ? 'جرّب كلمة بحث أخرى.' : 'أضف أول موزع لتبدأ بتسجيل المبيعات والتحصيلات.' ?></p>
-            <button type="button" class="btn btn--primary" data-modal-open="distributor-create"><?= icon('plus') ?> إضافة موزع</button>
+            <p><?= $term !== '' ? 'جرّب كلمة بحث أخرى.' : (is_admin() ? 'أضف أول موزع لتبدأ بتسجيل المبيعات والتحصيلات.' : 'لا يوجد موزعون متاحون حاليًا.') ?></p>
+            <?php if (is_admin()): ?>
+                <button type="button" class="btn btn--primary" data-modal-open="distributor-create"><?= icon('plus') ?> إضافة موزع</button>
+            <?php endif; ?>
         </div>
     </div>
 <?php else: ?>
@@ -75,6 +79,7 @@
                         <a class="btn btn--outline btn--sm" href="<?= e(url('/distributors/' . $distributor['id'])) ?>">
                             <?= icon('receipt') ?> كشف حساب
                         </a>
+                        <?php if (is_admin()): // تعديل الموزع للمدير فقط (الرصيد يُحسب من الفواتير والتحصيلات) ?>
                         <button type="button" class="btn btn--outline btn--sm" data-fill="distributor-edit"
                                 data-action="<?= e(url('/distributors')) ?>/{id}/update"
                                 data-values='<?= e(json_encode([
@@ -88,6 +93,7 @@
                                 aria-label="تعديل بيانات الموزع">
                             <?= icon('edit') ?>
                         </button>
+                        <?php endif; ?>
                         <?php if (is_admin()): // حذف الموزع للمدير فقط (مفروض على الخادم أيضًا) ?>
                             <form method="post" action="<?= e(url('/distributors/' . $distributor['id'] . '/delete')) ?>">
                                 <?= csrf_field() ?>
@@ -105,6 +111,7 @@
     </div>
 <?php endif; ?>
 
+<?php if (is_admin()): // نماذج الإضافة/التعديل للمدير فقط (والمسارات محمية على الخادم) ?>
 <!-- نافذة إضافة موزع -->
 <div class="modal" id="distributor-create" hidden>
     <div class="modal__overlay" data-modal-close></div>
@@ -146,3 +153,4 @@
         </div>
     </div>
 </div>
+<?php endif; ?>

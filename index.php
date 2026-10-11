@@ -58,21 +58,24 @@ $router->post('/logout', [\App\Controllers\AuthController::class, 'logout'], $au
 $router->get('/', [\App\Controllers\DashboardController::class, 'index'], $auth);
 
 // ── الباقات ───────────────────────────────────────────────────────────────
+// العرض متاح لكل الأدوار، وكل إضافة/تعديل/تعطيل/حذف للمدير فقط (مفروض على الخادم) — M6
 $router->get('/packages', [\App\Controllers\PackagesController::class, 'index'], $auth);
-$router->post('/packages', [\App\Controllers\PackagesController::class, 'store'], $auth);
-$router->post('/packages/{id}/update', [\App\Controllers\PackagesController::class, 'update'], $auth);
-$router->post('/packages/{id}/toggle', [\App\Controllers\PackagesController::class, 'toggle'], $auth);
+$router->post('/packages', [\App\Controllers\PackagesController::class, 'store'], $admin);
+$router->post('/packages/{id}/update', [\App\Controllers\PackagesController::class, 'update'], $admin);
+$router->post('/packages/{id}/toggle', [\App\Controllers\PackagesController::class, 'toggle'], $admin);
 $router->post('/packages/{id}/delete', [\App\Controllers\PackagesController::class, 'destroy'], $admin);
 
 // ── المخزون ───────────────────────────────────────────────────────────────
+// الموظف يعرض الأرصدة فقط؛ الإضافة والتسوية للمدير (وحركات البيع/الإرجاع تلقائية في النظام)
 $router->get('/inventory', [\App\Controllers\InventoryController::class, 'index'], $auth);
-$router->post('/inventory/add', [\App\Controllers\InventoryController::class, 'add'], $auth);
-$router->post('/inventory/adjust', [\App\Controllers\InventoryController::class, 'adjust'], $auth);
+$router->post('/inventory/add', [\App\Controllers\InventoryController::class, 'add'], $admin);
+$router->post('/inventory/adjust', [\App\Controllers\InventoryController::class, 'adjust'], $admin);
 
 // ── الموزعون ──────────────────────────────────────────────────────────────
+// الموظف يعرض الموزعين ويختارهم في المبيعات/التحصيلات؛ الإضافة/التعديل/الحذف للمدير فقط
 $router->get('/distributors', [\App\Controllers\DistributorsController::class, 'index'], $auth);
-$router->post('/distributors', [\App\Controllers\DistributorsController::class, 'store'], $auth);
-$router->post('/distributors/{id}/update', [\App\Controllers\DistributorsController::class, 'update'], $auth);
+$router->post('/distributors', [\App\Controllers\DistributorsController::class, 'store'], $admin);
+$router->post('/distributors/{id}/update', [\App\Controllers\DistributorsController::class, 'update'], $admin);
 $router->post('/distributors/{id}/delete', [\App\Controllers\DistributorsController::class, 'destroy'], $admin);
 $router->get('/distributors/{id}', [\App\Controllers\DistributorsController::class, 'show'], $auth);
 

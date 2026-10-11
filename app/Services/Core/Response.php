@@ -46,7 +46,14 @@ final class Response
             . '<a class="btn btn--primary" href="' . e(url('/')) . '">العودة إلى لوحة التحكم</a></div>';
 
         if (Auth::check()) {
-            View::render('errors/index', ['title' => $title, 'message' => $message], 'layouts/app');
+            // صفحة الخطأ (403/404/405) تُعرض داخل التخطيط العام، فنُمرِّر بيانات القائمة الجانبية والترويسة
+            // وإلا ظهرتا بلا اسم الشبكة ولا اسم المستخدم (تحذيرات PHP 8). الموظف يرى هذه الصفحة عند رفض عمليته (M6).
+            View::render('errors/index', [
+                'title' => $title,
+                'message' => $message,
+                'settings' => Setting::all(),
+                'currentUser' => Auth::user(),
+            ], 'layouts/app');
 
             exit;
         }

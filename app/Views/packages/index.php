@@ -9,9 +9,11 @@
 <div class="page-header">
     <div>
         <h1>إدارة الباقات</h1>
-        <p>إضافة وتعديل وتعطيل الباقات. سعر الباقة هو سعر بيع الشدة.</p>
+        <p><?= is_admin() ? 'إضافة وتعديل وتعطيل الباقات. سعر الباقة هو سعر بيع الشدة.' : 'عرض الباقات وأسعارها. الإضافة والتعديل متاحة للمدير فقط.' ?></p>
     </div>
-    <button type="button" class="btn btn--primary" data-modal-open="package-create"><?= icon('plus') ?> باقة جديدة</button>
+    <?php if (is_admin()): ?>
+        <button type="button" class="btn btn--primary" data-modal-open="package-create"><?= icon('plus') ?> باقة جديدة</button>
+    <?php endif; ?>
 </div>
 
 <?php if ($packages === []): ?>
@@ -19,8 +21,10 @@
         <div class="empty-state">
             <div class="empty-state__icon"><?= icon('package') ?></div>
             <h2>لا توجد باقات</h2>
-            <p>أضف أول باقة لتبدأ بتسجيل المخزون والمبيعات.</p>
-            <button type="button" class="btn btn--primary" data-modal-open="package-create"><?= icon('plus') ?> إضافة باقة</button>
+            <p><?= is_admin() ? 'أضف أول باقة لتبدأ بتسجيل المخزون والمبيعات.' : 'لا توجد باقات متاحة حاليًا.' ?></p>
+            <?php if (is_admin()): ?>
+                <button type="button" class="btn btn--primary" data-modal-open="package-create"><?= icon('plus') ?> إضافة باقة</button>
+            <?php endif; ?>
         </div>
     </div>
 <?php else: ?>
@@ -46,6 +50,7 @@
                 </div>
 
                 <div class="btn-group mt-3">
+                    <?php if (is_admin()): // تعديل/تعطيل الباقة للمدير فقط (مفروض على الخادم أيضًا) ?>
                     <button type="button" class="btn btn--outline btn--sm" data-fill="package-edit"
                             data-action="<?= e(url('/packages')) ?>/{id}/update"
                             data-values='<?= e(json_encode([
@@ -67,6 +72,7 @@
                             <?= $package['status'] === 'active' ? 'تعطيل' : 'تفعيل' ?>
                         </button>
                     </form>
+                    <?php endif; ?>
 
                     <?php if (is_admin()): // حذف الباقة للمدير فقط (مفروض على الخادم أيضًا) ?>
                         <form method="post" action="<?= e(url('/packages/' . $package['id'] . '/delete')) ?>">
@@ -83,6 +89,7 @@
     </div>
 <?php endif; ?>
 
+<?php if (is_admin()): // نماذج الإضافة/التعديل للمدير فقط (والمسارات محمية على الخادم) ?>
 <!-- نافذة إضافة باقة -->
 <div class="modal" id="package-create" hidden>
     <div class="modal__overlay" data-modal-close></div>
@@ -125,3 +132,4 @@
         </div>
     </div>
 </div>
+<?php endif; ?>

@@ -13,12 +13,14 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
 <div class="page-header">
     <div>
         <h1>إدارة المخزون</h1>
-        <p>متابعة الكميات وحركة المخزون. تُحفظ تكلفة كل إضافة وقت إنشائها ولا تتغيّر لاحقًا.</p>
+        <p><?= is_admin() ? 'متابعة الكميات وحركة المخزون. تُحفظ تكلفة كل إضافة وقت إنشائها ولا تتغيّر لاحقًا.' : 'عرض أرصدة المخزون وحركاته. الإضافة والتسوية متاحة للمدير فقط.' ?></p>
     </div>
-    <div class="btn-group">
-        <button type="button" class="btn btn--primary" data-modal-open="inventory-add"><?= icon('plus') ?> إضافة مخزون</button>
-        <button type="button" class="btn btn--outline" data-modal-open="inventory-adjust">تسوية المخزون</button>
-    </div>
+    <?php if (is_admin()): // الإضافة والتسوية للمدير فقط (مفروض على الخادم أيضًا) ?>
+        <div class="btn-group">
+            <button type="button" class="btn btn--primary" data-modal-open="inventory-add"><?= icon('plus') ?> إضافة مخزون</button>
+            <button type="button" class="btn btn--outline" data-modal-open="inventory-adjust">تسوية المخزون</button>
+        </div>
+    <?php endif; ?>
 </div>
 
 <div class="grid grid--stats mb-4">
@@ -91,11 +93,13 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
                     <p class="text-xs text-muted mt-1">سعر الشدة: <?= e(money($row['unit_price'])) ?></p>
                     <p class="text-xs text-muted">قيمة المخزون: <?= e(money($row['value'])) ?></p>
 
-                    <button type="button" class="btn btn--outline btn--sm btn--block mt-2"
-                            data-fill="inventory-adjust"
-                            data-values='<?= e(json_encode(['package_id' => (int) $row['package_id'], 'target_quantity' => (int) $row['current']], JSON_UNESCAPED_UNICODE)) ?>'>
-                        <?= icon('edit') ?> تعديل
-                    </button>
+                    <?php if (is_admin()): // تعديل الكميات (التسوية) للمدير فقط ?>
+                        <button type="button" class="btn btn--outline btn--sm btn--block mt-2"
+                                data-fill="inventory-adjust"
+                                data-values='<?= e(json_encode(['package_id' => (int) $row['package_id'], 'target_quantity' => (int) $row['current']], JSON_UNESCAPED_UNICODE)) ?>'>
+                            <?= icon('edit') ?> تعديل
+                        </button>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -149,6 +153,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
     <?php endif; ?>
 <?php endif; ?>
 
+<?php if (is_admin()): // نماذج الإضافة/التسوية للمدير فقط (والمسارات محمية على الخادم) ?>
 <!-- نافذة إضافة مخزون -->
 <div class="modal" id="inventory-add" hidden>
     <div class="modal__overlay" data-modal-close></div>
@@ -229,6 +234,7 @@ $activeTab = ($_GET['tab'] ?? 'stock') === 'history' ? 'history' : 'stock';
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <script>
     // عرض سعر الشدة المعتمد من الباقة المختارة (قراءة فقط) — السعر النهائي يُحدَّد على الخادم.
