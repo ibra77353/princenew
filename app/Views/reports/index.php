@@ -18,6 +18,17 @@ $periods = [
 ];
 $sales = $report['sales'];
 $cash = $report['cash'];
+$statusLabels = ['active' => 'النشطة فقط', 'cancelled' => 'الملغاة فقط', 'all' => 'النشطة والملغاة'];
+/** اسم العنصر المختار في فلتر الموزع/الباقة، أو «الكل» إن لم يُفلتر بعد. */
+$filterName = static function (array $items, int $id): string {
+    foreach ($items as $item) {
+        if ((int) $item['id'] === $id) {
+            return (string) $item['name'];
+        }
+    }
+
+    return 'الكل';
+};
 ?>
 <div class="page-header">
     <div>
@@ -79,9 +90,26 @@ $cash = $report['cash'];
     </div>
 </form>
 
-<?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
+<div class="print-area report-doc">
+    <?php // ترويسة ورقية: تُعرض في الطباعة فقط لتبيّن نطاق التقرير وقاعدة استبعاد الملغاة ?>
+    <div class="print-only mb-4">
+        <h2>تقرير <?= e($settings['network_name'] ?? 'شبكة البرنس') ?></h2>
+        <p class="hint">
+            الفترة: <?= $filters['from'] !== '' ? e(fdate($filters['from'])) : 'من البداية' ?>
+            — <?= $filters['to'] !== '' ? e(fdate($filters['to'])) : 'حتى اليوم' ?>
+            • الموزع: <?= e($filters['distributor_id'] > 0 ? $filterName($distributors, (int) $filters['distributor_id']) : 'كل الموزعين') ?>
+            • الباقة: <?= e($filters['package_id'] > 0 ? $filterName($packages, (int) $filters['package_id']) : 'كل الباقات') ?>
+            • حالة المبيعات: <?= e($statusLabels[$filters['status']] ?? 'النشطة فقط') ?>
+        </p>
+        <p class="hint">
+            الأرقام تستبعد أثر الفواتير والتحصيلات الملغاة والمعكوسة (كشاشة الصندوق ولوحة التحكم)،
+            وتبقى كل الحركات الأصلية والعكسية في سجل الصندوق وسجل التدقيق بلا حذف.
+        </p>
+    </div>
 
-<p class="text-sm text-muted mb-4">
+    <?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
+
+    <p class="text-sm text-muted mb-4">
     الفترة: <?= $filters['from'] !== '' ? e(fdate($filters['from'])) : 'من البداية' ?>
     — <?= $filters['to'] !== '' ? e(fdate($filters['to'])) : 'حتى اليوم' ?>
 </p>
@@ -329,4 +357,5 @@ $cash = $report['cash'];
             </table>
         </div>
     </section>
+</div>
 </div>

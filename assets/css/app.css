@@ -637,11 +637,19 @@ textarea.input { min-height: 4.5rem; resize: vertical; }
 .btn--green { background: #00875a; color: hsl(0 0% 100%); }
 .btn--whatsapp { background: #00a884; color: hsl(0 0% 100%); }
 
+/* عناصر تُعرض على الورق فقط (ترويسة التقرير المطبوعة) */
+.print-only { display: none; }
+
 @media print {
     body * { visibility: hidden; }
     .print-area, .print-area * { visibility: visible; }
     .print-area { position: absolute; inset-inline: 0; top: 0; width: 100%; max-width: none; border: 0; box-shadow: none; border-radius: 0; }
     .no-print { display: none !important; }
+    .print-only { display: block; }
+    /* مستند التقرير طويل: أعمدة الجداول تلتف ولا تُقصّ داخل حاوية التمرير */
+    .report-doc .table-wrap { overflow: visible; }
+    .report-doc .table th, .report-doc .table td { white-space: normal; }
+    .report-doc .table tr { break-inside: avoid; }
     body { background: #fff; }
 }
 
