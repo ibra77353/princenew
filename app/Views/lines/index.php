@@ -64,13 +64,15 @@
                             ], JSON_UNESCAPED_UNICODE)) ?>'>
                         <?= icon('edit') ?> تعديل
                     </button>
-                    <form method="post" action="<?= e(url('/lines/' . $line['id'] . '/delete')) ?>">
-                        <?= csrf_field() ?>
-                        <button type="submit" class="btn btn--soft-danger btn--sm"
-                                data-confirm="حذف الخط «<?= e($line['name']) ?>»؟">
-                            <?= icon('trash') ?>
-                        </button>
-                    </form>
+                    <?php if (is_admin()): // حذف الخط للمدير فقط (مفروض على الخادم أيضًا) ?>
+                        <form method="post" action="<?= e(url('/lines/' . $line['id'] . '/delete')) ?>">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn--soft-danger btn--sm"
+                                    data-confirm="حذف الخط «<?= e($line['name']) ?>»؟">
+                                <?= icon('trash') ?>
+                            </button>
+                        </form>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>

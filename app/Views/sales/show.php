@@ -138,7 +138,7 @@ $isPaid = (float) $remaining <= 0;
     <button type="button" class="btn btn--outline" data-print><?= icon('printer') ?> طباعة</button>
 </div>
 
-<?php if ($isActive): ?>
+<?php if ($isActive && is_admin()): // إلغاء الفاتورة للمدير فقط (مفروض على الخادم أيضًا) ?>
     <div class="card card--pad card--narrow mt-4 no-print">
         <h3 class="section-title"><?= icon('alert') ?> إلغاء الفاتورة</h3>
         <p class="text-sm text-muted mb-2">

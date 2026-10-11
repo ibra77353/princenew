@@ -19,9 +19,18 @@ $nav = [
     ['/reports', 'التقارير', 'chart'],
     ['/search', 'البحث', 'search'],
     ['/audit', 'سجل التدقيق', 'history'],
+];
+
+// عناصر المدير فقط (الإعدادات والنسخ الاحتياطي وإدارة المستخدمين) — الفرض الفعلي على الخادم لا في الواجهة.
+$adminNav = [
+    ['/users', 'المستخدمون', 'shield'],
     ['/settings', 'الإعدادات', 'settings'],
     ['/backup', 'النسخ الاحتياطي', 'database'],
 ];
+
+if (is_admin()) {
+    $nav = array_merge($nav, $adminNav);
+}
 ?>
 <aside class="sidebar" data-sidebar>
     <div class="sidebar__brand">

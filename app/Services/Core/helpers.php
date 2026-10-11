@@ -172,6 +172,22 @@ if (!function_exists('is_active_path')) {
     }
 }
 
+if (!function_exists('is_admin')) {
+    /** هل المستخدم الحالي مدير؟ تُستخدم لإخفاء عناصر الواجهة فقط — الفرض الفعلي على الخادم (Auth::requireAdmin). */
+    function is_admin(): bool
+    {
+        return App\Services\Core\Auth::isAdmin();
+    }
+}
+
+if (!function_exists('role_label')) {
+    /** اسم الدور بالعربية (دورَان فقط: مدير / موظف). */
+    function role_label(?string $role): string
+    {
+        return $role === 'admin' ? 'مدير' : 'موظف';
+    }
+}
+
 if (!function_exists('input_int')) {
     function input_int(mixed $value): int
     {
@@ -188,6 +204,7 @@ if (!function_exists('icon')) {
             'package' => '<path d="M21 8.5 12 3 3 8.5v7L12 21l9-5.5z"/><path d="M3 8.5 12 14l9-5.5"/><path d="M12 14v7"/>',
             'boxes' => '<path d="M3 7.5 7.5 4 12 7.5 7.5 11z"/><path d="M12 7.5 16.5 4 21 7.5 16.5 11z"/><path d="M3 16.5 7.5 13 12 16.5 7.5 20z"/><path d="M12 16.5 16.5 13 21 16.5 16.5 20z"/>',
             'users' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13A4 4 0 0 1 16 11"/>',
+            'shield' => '<path d="M12 3l7 3v5.6c0 4.5-2.9 7.5-7 8.9-4.1-1.4-7-4.4-7-8.9V6z"/><path d="M9 12.1l2.1 2.1 4.1-4.2"/>',
             'cart' => '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h2.5l2.6 11.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L21 7H6"/>',
             'coins' => '<circle cx="12" cy="8" r="5"/><path d="M6 15.5A6.5 6.5 0 0 0 12 21a6.5 6.5 0 0 0 6-2.6"/><path d="M9 12v1.5"/><path d="M15 12v1.5"/>',
             'wifi' => '<path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M2 9a15 15 0 0 1 20 0"/><circle cx="12" cy="19.5" r="1"/>',

@@ -88,14 +88,16 @@
                                 aria-label="تعديل بيانات الموزع">
                             <?= icon('edit') ?>
                         </button>
-                        <form method="post" action="<?= e(url('/distributors/' . $distributor['id'] . '/delete')) ?>">
-                            <?= csrf_field() ?>
-                            <button type="submit" class="btn btn--soft-danger btn--sm"
-                                    aria-label="حذف الموزع"
-                                    data-confirm="حذف الموزع «<?= e($distributor['name']) ?>»؟">
-                                <?= icon('trash') ?>
-                            </button>
-                        </form>
+                        <?php if (is_admin()): // حذف الموزع للمدير فقط (مفروض على الخادم أيضًا) ?>
+                            <form method="post" action="<?= e(url('/distributors/' . $distributor['id'] . '/delete')) ?>">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn--soft-danger btn--sm"
+                                        aria-label="حذف الموزع"
+                                        data-confirm="حذف الموزع «<?= e($distributor['name']) ?>»؟">
+                                    <?= icon('trash') ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 </div>
             </article>

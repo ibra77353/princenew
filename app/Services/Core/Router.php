@@ -102,6 +102,11 @@ final class Router
             if ($name === 'auth') {
                 Auth::requireLogin();
             }
+            // الحماية الإدارية على الخادم: كل مسار للمدير فقط يُرفض لغير المدير (403) حتى لو أُرسل الطلب مباشرة (M6)
+            if ($name === 'admin') {
+                Auth::requireLogin();
+                Auth::requireAdmin();
+            }
             if ($name === 'guest' && Auth::check() && !Auth::needsSetup()) {
                 Response::redirect('/');
             }

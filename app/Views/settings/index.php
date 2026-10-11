@@ -79,31 +79,17 @@ $value = static fn (string $key, mixed $default = ''): mixed => $row[$key] ?? $s
 
         <section class="card card--pad">
             <h3 class="section-title"><?= icon('users') ?> مستخدمو النظام</h3>
-            <?php if ($users === []): ?>
-                <div class="empty-state"><p>لا يوجد مستخدمون بعد.</p></div>
-            <?php else: ?>
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>آخر دخول</th></tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($users as $user): ?>
-                                <tr>
-                                    <td><?= e($user['name']) ?></td>
-                                    <td><?= e($user['email']) ?></td>
-                                    <td><span class="badge badge--primary"><?= $user['role'] === 'admin' ? 'مدير' : 'مستخدم' ?></span></td>
-                                    <td><?= e(fdatetime($user['last_login_at'])) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+            <p class="text-sm text-muted">إضافة حسابات الموظفين، تعديل الأدوار، تعطيل الحسابات وتغيير كلمات المرور — من شاشة المستخدمين.</p>
+            <div class="stack stack--sm text-sm mt-2 mb-2">
+                <div class="row row--between">
+                    <span class="text-muted text-xs">عدد المستخدمين</span>
+                    <span class="text-bold"><?= e((string) count($users)) ?></span>
                 </div>
-                <p class="hint mt-2">
-                    لإضافة مستخدم أو تغيير كلمة مرور المدير، شغّل الأداة:
-                    <code>php tools/create_admin.php</code>
-                </p>
-            <?php endif; ?>
+            </div>
+            <a class="btn btn--outline btn--block" href="<?= e(url('/users')) ?>"><?= icon('shield') ?> إدارة المستخدمين</a>
+            <p class="hint mt-2">
+                لكلمة مرور طارئة من سطر الأوامر: <code>php tools/create_admin.php --password-only</code>
+            </p>
         </section>
 
         <section class="card card--pad">
@@ -111,6 +97,7 @@ $value = static fn (string $key, mixed $default = ''): mixed => $row[$key] ?? $s
             <ul class="text-sm text-muted bullets">
                 <li>كلمات المرور محفوظة بتشفير <code>password_hash()</code> ولا تُخزَّن كنص صريح.</li>
                 <li>لا توجد بيانات دخول افتراضية في المستودع؛ يُنشئ المدير الأول عبر شاشة الإعداد.</li>
+                <li>دورَان فقط: <strong>مدير</strong> (صلاحية كاملة) و<strong>موظف</strong> (تشغيل محدود). الصلاحيات مفروضة على الخادم في كل المسارات، لا بإخفاء الأزرار فقط.</li>
                 <li>جميع الطلبات التي تغيّر البيانات محمية برمز CSRF.</li>
                 <li>لا يوجد قسم للموردين في النظام، وبيع الشدات هو وحدة المخزون الأساسية.</li>
             </ul>

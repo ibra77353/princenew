@@ -157,6 +157,50 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
 
 ---
 
+### 8. الأدوار والصلاحيات (M6: مدير + موظف)
+
+دورَان فقط ولا ثالث لهما، والقيمة المخزَّنة في `users.role = ENUM('admin','employee')`:
+
+- **`admin`** — صلاحية كاملة، بما فيها الإعدادات والنسخ الاحتياطي وإدارة المستخدمين وحذف السجلات الحساسة وإلغاء الفواتير.
+- **`employee`** — تشغيل محدود: مبيعات نقدية وآجلة، تحصيلات، مخزون، موزعون، خطوط ودفعاتها، مصروفات، صندوق وتقارير وبحث.
+
+الفرض **على الخادم لا في الواجهة**: `Auth::ROLE_ADMIN`/`ROLE_EMPLOYEE` و`Auth::isAdmin()` و`Auth::requireAdmin()`
+(ترد 403 «هذه العملية متاحة للمدير فقط») في `app/Services/Core/Auth.php`، ويستدعيها وسيط `admin` في
+`app/Services/Core/Router.php`. المسارات الإدارية مُعلَّمة بالوسيط `$admin = ['auth','admin']` في `index.php`:
+
+- كل مسارات `/users` و`/settings` و`/backup` (تصدير/استعادة/تنزيل/حذف).
+- العمليات الحساسة (مسار مستقل لكل منها): `/packages/{id}/delete`, `/lines/{id}/delete`,
+  `/distributors/{id}/delete`, `/sales/{id}/cancel`.
+
+قواعد الحماية الذاتية في `UsersController`: لا يغيّر المدير دوره، ولا يعطّل حسابه، ولا يحذفه، ولا يمكن إزالة دور
+المدير عن آخر حساب مدير نشط (منعًا لإقفال النظام). أي قيمة دور غير معروفة تُعالَج كـ`employee` (أقل صلاحية).
+
+- الواجهة تخفي فقط ما لا يُسمح به (`is_admin()` في `sidebar.php` وأزرار الحذف/الإلغاء) — الإخفاء تحسين تجربة
+  لا حماية؛ الحماية الحقيقية هي الوسيط و`requireAdmin()`.
+- إضافة مسار إداري جديد = ضعه في قائمة `$admin`، وإضافة عملية حساسة = أعطها مسارًا مستقلًا بالوسيط `admin`.
+- `AuditService::log()` يسجّل هوية المنفّذ تلقائيًا (`Auth::id()` و`Auth::name()`)؛ كل عملية مالية (بيع، تحصيل،
+  مصروف، دفعة خط، سحب، حركة مخزون) تُسجَّل عبره، فلا تُكتب صفوف `audit_logs` يدويًا ولا تُعدَّل.
+- شاشة المستخدمين `/users` (للمدير فقط): إضافة/تعديل/حذف الحسابات، تغيير الدور والحالة، وتغيير كلمة المرور
+  (تُترك فارغة للإبقاء عليها). الدور الافتراضي للحساب الجديد `employee`.
+
+**ترقية قاعدة قائمة** (المخطط الجديد لا يُطبَّق تلقائيًا على قاعدة موجودة، نفّذه مرة واحدة):
+```bash
+docker compose -f docker-compose.base44.yml exec -T db mysql --default-character-set=utf8mb4 \
+  -u root -pprince_root_dev prince_net -e "ALTER TABLE users MODIFY role ENUM('admin','employee') NOT NULL DEFAULT 'employee';"
+```
+
+**اختبار الصلاحيات** (متوقع 403 لمسار الإدارة و200 للمسارات التشغيلية بحساب موظف):
+```bash
+# أنشئ حساب موظف من /users ثم سجّل دخوله، واختبر برمز الجلسة
+curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar http://localhost:3000/settings   # 403
+curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar http://localhost:3000/users      # 403
+curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar http://localhost:3000/sales      # 200
+```
+الطلبات المُغيِّرة تُرفض بالوسيط قبل CSRF (403 بلا رمز)، وحتى إرسال طلب مباشر إلى `/users` بغرض إنشاء مدير
+أو رفع صلاحية لا يمرّ.
+
+---
+
 ## التحقق السريع بعد أي تعديل
 
 > لا يوجد خادم تطوير بـ live reload: Apache يقدّم ملفات PHP/CSS من الـ bind mount مباشرة،

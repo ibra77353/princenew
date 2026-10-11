@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     email         VARCHAR(190)  NOT NULL,
     username      VARCHAR(60)   NULL,
     password_hash VARCHAR(255)  NOT NULL,
-    role          ENUM('admin','user') NOT NULL DEFAULT 'admin',
+    role          ENUM('admin','employee') NOT NULL DEFAULT 'employee',
     status        ENUM('active','disabled') NOT NULL DEFAULT 'active',
     last_login_at DATETIME      NULL,
     created_at    DATETIME      NOT NULL,

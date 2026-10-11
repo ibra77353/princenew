@@ -9,6 +9,12 @@ namespace App\Services\Core;
  */
 final class Auth
 {
+    /** صلاحية كاملة: كل وظائف النظام بما فيها الإعدادات والنسخ الاحتياطي وإدارة المستخدمين وحذف السجلات الحساسة. */
+    public const ROLE_ADMIN = 'admin';
+
+    /** صلاحية تشغيلية محدودة: مبيعات نقدية وآجلة، تحصيلات، مخزون وخطوط — بلا إعدادات أو نسخ احتياطي أو إدارة مستخدمين. */
+    public const ROLE_EMPLOYEE = 'employee';
+
     /** @var array<string,mixed>|null */
     private static ?array $user = null;
 
@@ -51,6 +57,30 @@ final class Auth
     public static function name(): string
     {
         return (string) (self::user()['name'] ?? 'مستخدم');
+    }
+
+    /** دور المستخدم الحالي. أي قيمة غير معروفة تُعالَج كموظف (أقل صلاحية) لا كمدير. */
+    public static function role(): string
+    {
+        $role = (string) (self::user()['role'] ?? self::ROLE_EMPLOYEE);
+
+        return $role === self::ROLE_ADMIN ? self::ROLE_ADMIN : self::ROLE_EMPLOYEE;
+    }
+
+    public static function isAdmin(): bool
+    {
+        return self::role() === self::ROLE_ADMIN;
+    }
+
+    /**
+     * حماية المسارات الإدارية على الخادم: تُرفض العملية برد 403 لغير المدير،
+     * حتى لو أرسل الموظف الطلب مباشرة بلا واجهة.
+     */
+    public static function requireAdmin(): void
+    {
+        if (!self::isAdmin()) {
+            Response::abort(403, 'هذه العملية متاحة للمدير فقط.');
+        }
     }
 
     /** هل النظام ما زال بحاجة إلى إنشاء حساب المدير الأول؟ */

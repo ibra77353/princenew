@@ -14,6 +14,7 @@ final class AuditService
 {
     public const ENTITIES = [
         'auth' => 'الدخول',
+        'user' => 'المستخدم',
         'package' => 'الباقة',
         'inventory' => 'المخزون',
         'distributor' => 'الموزع',

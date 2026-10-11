@@ -44,6 +44,8 @@ $router = new \App\Services\Core\Router();
 
 $public = ['guest'];
 $auth = ['auth'];
+// وسيط «admin»: المصادقة ثم التحقق من دور المدير على الخادم (403 لبقية الأدوار) — M6
+$admin = ['auth', 'admin'];
 
 // ── المصادقة والإعداد الأول ───────────────────────────────────────────────
 $router->get('/login', [\App\Controllers\AuthController::class, 'loginForm'], $public);
@@ -60,7 +62,7 @@ $router->get('/packages', [\App\Controllers\PackagesController::class, 'index'],
 $router->post('/packages', [\App\Controllers\PackagesController::class, 'store'], $auth);
 $router->post('/packages/{id}/update', [\App\Controllers\PackagesController::class, 'update'], $auth);
 $router->post('/packages/{id}/toggle', [\App\Controllers\PackagesController::class, 'toggle'], $auth);
-$router->post('/packages/{id}/delete', [\App\Controllers\PackagesController::class, 'destroy'], $auth);
+$router->post('/packages/{id}/delete', [\App\Controllers\PackagesController::class, 'destroy'], $admin);
 
 // ── المخزون ───────────────────────────────────────────────────────────────
 $router->get('/inventory', [\App\Controllers\InventoryController::class, 'index'], $auth);
@@ -71,7 +73,7 @@ $router->post('/inventory/adjust', [\App\Controllers\InventoryController::class,
 $router->get('/distributors', [\App\Controllers\DistributorsController::class, 'index'], $auth);
 $router->post('/distributors', [\App\Controllers\DistributorsController::class, 'store'], $auth);
 $router->post('/distributors/{id}/update', [\App\Controllers\DistributorsController::class, 'update'], $auth);
-$router->post('/distributors/{id}/delete', [\App\Controllers\DistributorsController::class, 'destroy'], $auth);
+$router->post('/distributors/{id}/delete', [\App\Controllers\DistributorsController::class, 'destroy'], $admin);
 $router->get('/distributors/{id}', [\App\Controllers\DistributorsController::class, 'show'], $auth);
 
 // ── المبيعات ──────────────────────────────────────────────────────────────
@@ -79,7 +81,8 @@ $router->get('/sales', [\App\Controllers\SalesController::class, 'index'], $auth
 $router->get('/sales/create', [\App\Controllers\SalesController::class, 'create'], $auth);
 $router->post('/sales', [\App\Controllers\SalesController::class, 'store'], $auth);
 $router->get('/sales/{id}', [\App\Controllers\SalesController::class, 'show'], $auth);
-$router->post('/sales/{id}/cancel', [\App\Controllers\SalesController::class, 'cancel'], $auth);
+// إلغاء الفاتورة عملية مالية حسّاسة (تعكس النقد والمخزون): للمدير فقط
+$router->post('/sales/{id}/cancel', [\App\Controllers\SalesController::class, 'cancel'], $admin);
 
 // ── التحصيلات ─────────────────────────────────────────────────────────────
 $router->get('/collections', [\App\Controllers\CollectionsController::class, 'index'], $auth);
@@ -90,7 +93,7 @@ $router->get('/collections/outstanding', [\App\Controllers\CollectionsController
 $router->get('/lines', [\App\Controllers\LinesController::class, 'index'], $auth);
 $router->post('/lines', [\App\Controllers\LinesController::class, 'store'], $auth);
 $router->post('/lines/{id}/update', [\App\Controllers\LinesController::class, 'update'], $auth);
-$router->post('/lines/{id}/delete', [\App\Controllers\LinesController::class, 'destroy'], $auth);
+$router->post('/lines/{id}/delete', [\App\Controllers\LinesController::class, 'destroy'], $admin);
 $router->get('/lines/{id}', [\App\Controllers\LinesController::class, 'show'], $auth);
 $router->get('/line-payments', [\App\Controllers\LinePaymentsController::class, 'index'], $auth);
 $router->post('/line-payments', [\App\Controllers\LinePaymentsController::class, 'store'], $auth);
@@ -106,14 +109,21 @@ $router->get('/cash', [\App\Controllers\CashController::class, 'index'], $auth);
 $router->get('/reports', [\App\Controllers\ReportsController::class, 'index'], $auth);
 $router->get('/search', [\App\Controllers\SearchController::class, 'index'], $auth);
 
-// ── سجل التدقيق والإعدادات والنسخ الاحتياطي ───────────────────────────────
+// ── سجل التدقيق ───────────────────────────────────────────────────────────
 $router->get('/audit', [\App\Controllers\AuditLogController::class, 'index'], $auth);
-$router->get('/settings', [\App\Controllers\SettingsController::class, 'index'], $auth);
-$router->post('/settings', [\App\Controllers\SettingsController::class, 'update'], $auth);
-$router->get('/backup', [\App\Controllers\BackupController::class, 'index'], $auth);
-$router->post('/backup/export', [\App\Controllers\BackupController::class, 'export'], $auth);
-$router->post('/backup/restore', [\App\Controllers\BackupController::class, 'restore'], $auth);
-$router->get('/backup/{id}/download', [\App\Controllers\BackupController::class, 'download'], $auth);
-$router->post('/backup/{id}/delete', [\App\Controllers\BackupController::class, 'destroy'], $auth);
+
+// ── المستخدمون والإعدادات والنسخ الاحتياطي (للمدير فقط) ─────────────────
+$router->get('/users', [\App\Controllers\UsersController::class, 'index'], $admin);
+$router->post('/users', [\App\Controllers\UsersController::class, 'store'], $admin);
+$router->post('/users/{id}/update', [\App\Controllers\UsersController::class, 'update'], $admin);
+$router->post('/users/{id}/delete', [\App\Controllers\UsersController::class, 'destroy'], $admin);
+
+$router->get('/settings', [\App\Controllers\SettingsController::class, 'index'], $admin);
+$router->post('/settings', [\App\Controllers\SettingsController::class, 'update'], $admin);
+$router->get('/backup', [\App\Controllers\BackupController::class, 'index'], $admin);
+$router->post('/backup/export', [\App\Controllers\BackupController::class, 'export'], $admin);
+$router->post('/backup/restore', [\App\Controllers\BackupController::class, 'restore'], $admin);
+$router->get('/backup/{id}/download', [\App\Controllers\BackupController::class, 'download'], $admin);
+$router->post('/backup/{id}/delete', [\App\Controllers\BackupController::class, 'destroy'], $admin);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

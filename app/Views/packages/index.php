@@ -68,13 +68,15 @@
                         </button>
                     </form>
 
-                    <form method="post" action="<?= e(url('/packages/' . $package['id'] . '/delete')) ?>">
-                        <?= csrf_field() ?>
-                        <button type="submit" class="btn btn--soft-danger btn--sm"
-                                data-confirm="حذف الباقة «<?= e($package['name']) ?>»؟ لا يمكن التراجع.">
-                            <?= icon('trash') ?>
-                        </button>
-                    </form>
+                    <?php if (is_admin()): // حذف الباقة للمدير فقط (مفروض على الخادم أيضًا) ?>
+                        <form method="post" action="<?= e(url('/packages/' . $package['id'] . '/delete')) ?>">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn--soft-danger btn--sm"
+                                    data-confirm="حذف الباقة «<?= e($package['name']) ?>»؟ لا يمكن التراجع.">
+                                <?= icon('trash') ?>
+                            </button>
+                        </form>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
