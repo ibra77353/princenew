@@ -14,6 +14,13 @@
  */
 $selectedId = $distributor !== null ? (int) $distributor['id'] : 0;
 $statementUrl = url('/distributors/statement') . ($selectedId > 0 ? '?distributor_id=' . $selectedId : '');
+// رابط تصدير PDF: نفس الموزع والفترة المعروضة (يُبنى الملف على الخادم عبر PdfService/mPDF)
+$pdfQuery = array_filter([
+    'distributor_id' => $selectedId > 0 ? (string) $selectedId : '',
+    'from' => (string) $filters['from'],
+    'to' => (string) $filters['to'],
+], static fn (string $value): bool => $value !== '');
+$pdfUrl = url('/distributors/statement/pdf') . ($pdfQuery !== [] ? '?' . http_build_query($pdfQuery) : '');
 ?>
 <div class="page-header">
     <div>
@@ -32,6 +39,7 @@ $statementUrl = url('/distributors/statement') . ($selectedId > 0 ? '?distributo
         <a class="btn btn--outline" href="<?= e(url('/distributors')) ?>">رجوع</a>
         <?php if ($distributor !== null): ?>
             <a class="btn btn--primary" href="<?= e(url('/collections')) ?>"><?= icon('coins') ?> تسجيل تحصيل</a>
+            <a class="btn btn--outline" href="<?= e($pdfUrl) ?>"><?= icon('download') ?> تصدير PDF</a>
             <button type="button" class="btn btn--outline" data-print><?= icon('printer') ?> طباعة الكشف</button>
         <?php endif; ?>
     </div>

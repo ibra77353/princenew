@@ -76,6 +76,8 @@ $router->post('/inventory/adjust', [\App\Controllers\InventoryController::class,
 $router->get('/distributors', [\App\Controllers\DistributorsController::class, 'index'], $auth);
 // كشف حساب موزع: اختيار الموزع والفترة من شاشة واحدة (يُسجَّل قبل {id} حتى لا يلتقطه المسار العام)
 $router->get('/distributors/statement', [\App\Controllers\DistributorsController::class, 'statement'], $auth);
+// تصدير الكشف نفسه إلى PDF (رابط تنزيل GET بنفس فلاتر الموزع والفترة)
+$router->get('/distributors/statement/pdf', [\App\Controllers\DistributorsController::class, 'statementPdf'], $auth);
 $router->post('/distributors', [\App\Controllers\DistributorsController::class, 'store'], $admin);
 $router->post('/distributors/{id}/update', [\App\Controllers\DistributorsController::class, 'update'], $admin);
 $router->post('/distributors/{id}/delete', [\App\Controllers\DistributorsController::class, 'destroy'], $admin);

@@ -16,6 +16,12 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/login   # متو�
 
 - `web` — Apache + PHP 8.2 من `php:8.2-apache`، يُبنى من `Dockerfile`، والكود **مُثبَّت bind mount** من المستودع
   (لا تُنسخ الشيفرة داخل الصورة، فأي تعديل ينعكس مباشرة بدون إعادة بناء).
+  - الصورة تضيف امتداد **gd** (تحتاجه mPDF) و**composer** و`unzip`، وتبعيات PHP تُثبَّت من `composer.lock`
+    عند **إقلاع الحاوية** داخل `vendor/` (bind mount): `vendor/` مستثنى في `.gitignore` ومحجوب من الويب برد 403
+    عبر `.htaccess` (مثل `composer.json`/`composer.lock`). فشل التثبيت لا يمنع الإقلاع (تنبيه في السجل)،
+    ويبقى تصدير PDF معطّلًا برسالة عربية حتى ينجح.
+  - **الجلسات تُحفظ داخل حاوية `web`** (لا مجلد بيانات)، فإعادة إنشاء الحاوية (`up -d --build`) تُنهي الجلسات
+    القائمة ويظهر `/login` — أعِد تسجيل الدخول في المعاينة بعد أي إعادة بناء (سلوك بيئة التطوير لا عُطل).
 - `db` — MySQL 8.0 على مجلد بيانات دائم باسم `db_data` (تُحفظ البيانات بين الجلسات).
 - `db-init` — خدمة **تُنفَّذ مرة واحدة** وتطبّق `database/schema.sql` على قاعدة `prince_net`.
 
@@ -181,8 +187,8 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
   `POST /distributors`, `POST /distributors/{id}/update`,
   `POST /lines`, `POST /lines/{id}/update`.
   مسارات العرض تبقى `$auth` لكل الأدوار: `GET /packages`, `GET /inventory`, `GET /distributors`,
-  `GET /distributors/{id}`, `GET /distributors/statement` (كشف حساب موزع: عرض فقط لكل الأدوار),
-  `GET /lines`, `GET /lines/{id}`.
+  `GET /distributors/{id}`, `GET /distributors/statement` و`GET /distributors/statement/pdf`
+  (كشف حساب موزع وتصديره PDF: عرض/تنزيل فقط لكل الأدوار), `GET /lines`, `GET /lines/{id}`.
 - **شاشات المصروفات وسحوبات المالك والتقارير وسجل التدقيق للمدير فقط** (طلب لاحق):
   `GET/POST /expenses`, `GET/POST /owner-withdrawals`, `GET /reports`, `GET /audit`.
   أما `/cash` و`/search` فيبقيان `$auth` للموظف مع إخفاء ما لا يُسمح به داخلهما: البحث يحذف مجموعتَي
@@ -387,9 +393,18 @@ SELECT package_id, SUM(CASE ... END), NOW() FROM inventory_movements GROUP BY pa
   أما «الرصيد المستحق» فيبقى `Distributor::balance()` على كل الفترات لأن الدين لا يتوقّف عند حدّ الفترة.
 - المستند كله داخل `.print-area` مع زر `data-print` في الترويسة (خارج المنطقة) وترويسة ورقية `.print-only`
   تحمل الموزع والفترة والرصيد — نفس قاعدة الطباعة أعلاه، فأي شاشة طباعة بلا `.print-area` تطبع فارغة.
+- **تصدير PDF:** `GET /distributors/statement/pdf?distributor_id=&from=&to=` (رابط تنزيل GET بوسيط `$auth`)
+  يبني الملف عبر `PdfService::download()` (mPDF + القالب `distributors/pdf.php`) بنفس موزع الشاشة وفترتها،
+  وبياناته من `DistributorsController::statementData()` — **مصدر واحد** للشاشة وللملف، فلا يفترق رقم الملف عن المعروض.
+  mPDF مضبوط على `directionality = rtl` والخط العربي المدمج `xbriyaz`، والمخرج A4 (بورتريه) مع تذييل ترقيم صفحات.
+  عند الفشل (بلا موزع، فترة غير صالحة، أو مكتبة غير مثبّتة) لا تُعرض تفاصيل تقنية: رسالة عربية + إعادة إلى الشاشة (M5).
+  زر «تصدير PDF» في ترويسة الكشف يحمل الفلاتر الحالية نفسها، فيطابق الملف ما على الشاشة.
+  **لا تُكرِّر بناء البيانات أو الحسابات داخل قالب الـ PDF** ولا تُضِف مكتبة PDF أخرى بلا داعٍ.
 - تحقق سريع (بجلسة مصرّح لها): `GET /distributors/statement` يعرض قائمة الاختيار، و
   `GET /distributors/statement?distributor_id=8&from=2020-01-01&to=2020-12-31` يعرض صفر صفوف وإجماليات صفرية
-  مع بقاء «الرصيد المستحق» رصيد الموزع الحالي (كل الفترات).
+  مع بقاء «الرصيد المستحق» رصيد الموزع الحالي (كل الفترات)، و
+  `GET /distributors/statement/pdf?distributor_id=8` يعيد `application/pdf` يبدأ بـ`%PDF-`
+  (للتفتيش في المحتوى: `poppler-utils` تُثبَّت داخل الحاوية وقت الفحص فقط، لا في الصورة).
 
 ### عمود «المنفّذ» في سجل حركات المخزون (`inventory/index.php`)
 

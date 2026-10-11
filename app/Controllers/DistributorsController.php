@@ -9,7 +9,11 @@ use App\Models\Distributor;
 use App\Models\Sale;
 use App\Services\Core\Controller;
 use App\Services\Core\Database;
+use App\Services\Core\ErrorHandler;
+use App\Services\Core\Flash;
+use App\Services\Core\Setting;
 use App\Services\Core\Validator;
+use App\Services\PdfService;
 
 final class DistributorsController extends Controller
 {
@@ -119,22 +123,67 @@ final class DistributorsController extends Controller
         $this->renderStatement((int) $params['id']);
     }
 
-    /** شاشة «كشف حساب موزع»: اختيار اسم الموزع والفترة من مكان واحد ثم عرض الكشف وطباعته. */
+    /** شاشة «كشف حساب موزع»: اختيار اسم الموزع والفترة من مكان واحد ثم عرض الكشف أو تصديره. */
     public function statement(): void
     {
         $this->renderStatement($this->int('distributor_id'));
     }
 
+    /**
+     * تصدير كشف الحساب إلى ملف PDF بنفس الموزع والفترة المعروضة.
+     * الرابط تنزيل GET لا نموذج، فعند الفشل نُعيد المستخدم إلى الشاشة مع رسالة (M5).
+     */
+    public function statementPdf(): void
+    {
+        $id = $this->int('distributor_id');
+
+        try {
+            $data = $this->statementData($id);
+
+            if ($data['distributor'] === null) {
+                throw new \RuntimeException('اختر موزعًا أولًا لتصدير الكشف.');
+            }
+            if ($data['rangeError'] !== '') {
+                throw new \RuntimeException($data['rangeError']);
+            }
+
+            $data['settings'] = Setting::all();
+            $data['title'] = 'كشف حساب ' . $data['distributor']['name'];
+
+            PdfService::download('distributors/pdf', $data, 'statement-' . $id . '-' . date('Ymd-His') . '.pdf');
+        } catch (\Throwable $e) {
+            $message = $e instanceof \PDOException ? '' : trim($e->getMessage());
+            if ($message === '' || !$e instanceof \RuntimeException) {
+                ErrorHandler::report($e);
+            }
+            Flash::error($message !== '' ? $message : 'تعذّر إنشاء ملف PDF. حاول مرة أخرى.');
+            $this->redirect('/distributors/statement' . ($id > 0 ? '?distributor_id=' . $id : ''));
+        }
+    }
+
     /** مستند الكشف: شاشة اختيار فقط قبل تحديد الموزع، ويكتمل بالبيانات والفترة بعده. */
     private function renderStatement(int $id): void
+    {
+        $data = $this->statementData($id);
+        $distributor = $data['distributor'];
+
+        $this->view('distributors/show', $data + [
+            'title' => $distributor === null ? 'كشف حساب موزع' : 'كشف حساب ' . $distributor['name'],
+            'distributors' => $this->statementOptions(new Distributor(), $distributor),
+        ]);
+    }
+
+    /**
+     * بيانات كشف الحساب (الموزع + الفواتير + التحصيلات + الإجماليات) — مصدر واحد للشاشة وللتصدير PDF.
+     * @return array<string,mixed>
+     */
+    private function statementData(int $id): array
     {
         $model = new Distributor();
         $distributor = $id > 0 ? $model->find($id) : null;
 
         if ($id > 0 && $distributor === null) {
             \App\Services\Core\Response::abort(404, 'الموزع غير موجود');
-
-            return;
         }
 
         // كشف الحساب: الفواتير والتحصيلات تُحصر بالفترة المختارة (المجموع والصفوف معًا)،
@@ -162,10 +211,8 @@ final class DistributorsController extends Controller
             }
         }
 
-        $this->view('distributors/show', [
-            'title' => $distributor === null ? 'كشف حساب موزع' : 'كشف حساب ' . $distributor['name'],
+        return [
             'distributor' => $distributor,
-            'distributors' => $this->statementOptions($model, $distributor),
             'sales' => $sales,
             'collections' => $collections,
             'activeSalesTotal' => round($activeSalesTotal, 2),
@@ -174,7 +221,7 @@ final class DistributorsController extends Controller
             'balance' => $distributor === null ? 0.0 : $model->balance($id),
             'filters' => ['from' => $from, 'to' => $to],
             'rangeError' => $rangeError,
-        ]);
+        ];
     }
 
     /**
