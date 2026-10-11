@@ -32,6 +32,15 @@ final class PackagesController extends Controller
     {
         $this->verifyCsrf();
 
+        // شبكة أمان: نموذج التعديل يحمل معرّف الباقة في حقل مخفي. لو وصل إلى مسار الإضافة
+        // (نسخة قديمة من الصفحة محفوظة في المتصفح) نُكمله كتعديل بدل رفضه كاسم مكرر.
+        $editingId = $this->int('id');
+        if ($editingId > 0) {
+            $this->update(['id' => (string) $editingId]);
+
+            return;
+        }
+
         $this->action(function (): void {
             $data = $this->packageData();
             $this->validate($data);

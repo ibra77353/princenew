@@ -37,9 +37,14 @@ if (!function_exists('url')) {
 }
 
 if (!function_exists('asset')) {
+    /** رابط ملف أصل مع رقم نسخة من وقت تعديل الملف، فلا يعرض المتصفح نسخة قديمة بعد أي تعديل. */
     function asset(string $path): string
     {
-        return url('assets/' . ltrim($path, '/'));
+        $relative = 'assets/' . ltrim($path, '/');
+        $file = BASE_PATH . '/' . $relative;
+        $version = is_file($file) ? filemtime($file) : false;
+
+        return url($relative . ($version !== false ? '?v=' . $version : ''));
     }
 }
 
