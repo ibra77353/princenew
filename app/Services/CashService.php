@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\CashTransaction;
 use App\Services\Core\Auth;
 use App\Services\Core\Database;
 use App\Services\Core\DateRange;
@@ -106,7 +107,12 @@ final class CashService
         );
     }
 
-    /** إجماليات فترة محددة (حدود شاملة بلا فقد أو تكرار عند حدّ اليوم). */
+    /**
+     * إجماليات فترة محددة (حدود شاملة بلا فقد أو تكرار عند حدّ اليوم).
+     * الأرقام تستبعد أثر العمليات الملغاة بنفس شرط شاشة الصندوق
+     * (`CashTransaction::excludeCancelledSql()`) فلا تختلف بطاقات لوحة التحكم عن شاشة الصندوق،
+     * والحركات نفسها تبقى في السجل بلا حذف.
+     */
     public static function totals(?string $from = null, ?string $to = null): array
     {
         $where = ['1 = 1'];
@@ -117,7 +123,8 @@ final class CashService
             "SELECT
                 COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS cash_in,
                 COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS cash_out
-             FROM cash_transactions WHERE " . implode(' AND ', $where),
+             FROM cash_transactions WHERE " . implode(' AND ', $where)
+                . ' AND ' . CashTransaction::excludeCancelledSql(),
             $params
         ) ?? [];
 

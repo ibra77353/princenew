@@ -43,9 +43,11 @@ final class CashTransaction extends Model
     {
         $prefix = $alias !== '' ? $alias . '.' : '';
 
+        // COALESCE على مرجع الحركة: مقارنة عمود NULL بمعامل تساوي تُنتج NULL فيُستبعد الصف كله
+        // خطأً (حركة بلا مرجع مثل تسوية نقدية يدوية)، والمقصود استبعاد أثر الملغاة فقط.
         return 'NOT (' . $prefix . "source = 'reversal'"
-            . ' OR (' . $prefix . "reference_type = 'sale' AND " . $prefix . 'reference_id IN (SELECT id FROM sales WHERE status = \'cancelled\'))'
-            . ' OR (' . $prefix . "reference_type = 'collection' AND " . $prefix . 'reference_id IN (SELECT id FROM collections WHERE status = \'reversed\')))';
+            . " OR (COALESCE(" . $prefix . "reference_type, '') = 'sale' AND " . $prefix . 'reference_id IN (SELECT id FROM sales WHERE status = \'cancelled\'))'
+            . " OR (COALESCE(" . $prefix . "reference_type, '') = 'collection' AND " . $prefix . 'reference_id IN (SELECT id FROM collections WHERE status = \'reversed\')))';
     }
 
     /** إجماليات الفترة (حدود شاملة: من بداية «من» إلى ما قبل بداية اليوم التالي لـ«إلى»). */

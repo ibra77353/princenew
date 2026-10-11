@@ -13,15 +13,16 @@ $cards = [
     ['مبيعات اليوم', money($stats['todaySalesTotal']), 'dashboard', 'tone-primary'],
     ['مبيعات الشهر', money($stats['monthSalesTotal']), 'chart', 'tone-green'],
     ['تحصيلات اليوم', money($stats['todayCollectionsTotal']), 'coins', 'tone-purple'],
-    ['ديون الموزعين', money($stats['totalDistributorDebt']), 'alert', 'tone-red'],
+    ['ديون الموزعين (بدون الملغاة)', money($stats['totalDistributorDebt']), 'alert', 'tone-red'],
     ['رصيد الصندوق', money($stats['cashBalance']), 'wallet', 'tone-green'],
     ['قيمة المخزون', money($stats['inventoryValue']), 'boxes', 'tone-amber'],
     ['عدد الباقات', $stats['packagesCount'] . ' (' . $stats['activePackagesCount'] . ' نشطة)', 'package', 'tone-primary'],
     ['عدد الموزعين', (string) $stats['distributorsCount'], 'users', 'tone-purple'],
     ['إجمالي المصروفات', money($stats['totalExpenses']), 'receipt', 'tone-red'],
     ['سحوبات المالك', money($stats['totalWithdrawals']), 'arrow-down', 'tone-amber'],
-    ['مقبوضات الصندوق', money($stats['cashIn']), 'dashboard', 'tone-green'],
-    ['مدفوعات الصندوق', money($stats['cashOut']), 'arrow-down', 'tone-red'],
+    // بطاقتا الصندوق بنفس مطابقة شاشة الصندوق: أرقام تستبعد أثر الفواتير والتحصيلات الملغاة
+    ['مقبوضات الصندوق (بدون الملغاة)', money($stats['cashIn']), 'dashboard', 'tone-green'],
+    ['مدفوعات الصندوق (بدون الملغاة)', money($stats['cashOut']), 'arrow-down', 'tone-red'],
 ];
 ?>
 <div class="page-header">
