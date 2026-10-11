@@ -17,7 +17,7 @@ final class OwnerWithdrawalsController extends Controller
         ['from' => $from, 'to' => $to, 'error' => $rangeError] = $this->dateRange();
 
         $model = new OwnerWithdrawal();
-        $pager = $this->pagination($model->count($from, $to), 25);
+        $pager = $this->pagination($model->countFiltered($from, $to), 25);
 
         $this->view('owner_withdrawals/index', [
             'title' => 'سحوبات المالك',

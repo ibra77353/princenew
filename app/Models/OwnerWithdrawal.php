@@ -35,7 +35,7 @@ final class OwnerWithdrawal extends Model
     }
 
     /** عدد السحوبات المطابقة للفترة (لترقيم الصفحات المطابق للتصفية). */
-    public function count(?string $from = null, ?string $to = null): int
+    public function countFiltered(?string $from = null, ?string $to = null): int
     {
         [$where, $params] = $this->buildFilters($from, $to);
 
