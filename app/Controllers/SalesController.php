@@ -28,7 +28,8 @@ final class SalesController extends Controller
         ];
 
         $model = new Sale();
-        // إجماليات مطابقة لنفس فلاتر التصفية (لا تجمع كل المبيعات النشطة بغضّ النظر عن الفلاتر).
+        // إجماليات مطابقة لنفس فلاتر التصفية ومحصورة بالفواتير النشطة (كما في لوحة التحكم):
+        // الفاتورة الملغاة لا تدخل في الإجمالي ولا في المدفوع ولا في الآجل، والآجل يخصم التحصيلات.
         $totals = $model->totalsFiltered($filters);
         $pager = $this->pagination($totals['count'], 25);
         $sales = $model->listing($filters, $pager['perPage'], $pager['offset']);
@@ -42,6 +43,7 @@ final class SalesController extends Controller
             'totals' => [
                 'all' => $totals['total'],
                 'paid' => $totals['paid'],
+                'remaining' => $totals['remaining'],
             ],
             'rangeError' => $rangeError,
         ]);

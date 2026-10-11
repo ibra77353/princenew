@@ -33,7 +33,7 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
     </div>
     <div class="stat">
         <span class="stat__title">الآجل (المتبقي)</span>
-        <span class="stat__value text-warning"><?= e(money($totals['all'] - $totals['paid'])) ?></span>
+        <span class="stat__value text-warning"><?= e(money($totals['remaining'])) ?></span>
     </div>
 </div>
 
@@ -76,10 +76,9 @@ $hasFilters = $filters['term'] !== '' || $filters['from'] !== '' || $filters['to
     </div>
 <?php else: ?>
     <div class="record-list">
-        <?php $salesModel = new \App\Models\Sale(); // مصدر واحد للمتبقي في كل الشاشات ?>
         <?php foreach ($sales as $sale): ?>
-            <?php // Sale::remaining تُرجع صفرًا للفاتورة الملغاة، فيطابق عرض القائمة صفحةَ الفاتورة (تحت «الكل» و«ملغاة») ?>
-            <?php $remaining = $salesModel->remaining((int) $sale['id']); ?>
+            <?php // المتبقي يأتي من الموديل بنفس معادلة صفحة الفاتورة: الملغاة صفر والتحصيلات مخصومة ?>
+            <?php $remaining = (float) $sale['remaining']; ?>
             <article class="card card--pad record">
                 <div class="record__head">
                     <div>

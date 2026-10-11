@@ -62,26 +62,28 @@ final class Sale extends Model
         return $sale;
     }
 
+    /**
+     * تعبير SQL موحّد للمتبقي — مصدر واحد لصفحة الفاتورة وقائمة المبيعات وبطاقة «الآجل (المتبقي)»:
+     * صفر للفاتورة الملغاة (الإلغاء يُلغي الالتزام ويُعكس المدفوع والتحصيلات)،
+     * وإلا: الإجمالي − المدفوع − التحصيلات النشطة.
+     */
+    private static function remainingSql(string $alias = 's'): string
+    {
+        return "CASE WHEN {$alias}.status = 'active'
+                     THEN {$alias}.total_amount - {$alias}.paid_amount
+                          - COALESCE((SELECT SUM(c.amount) FROM collections c
+                                      WHERE c.sale_id = {$alias}.id AND c.status = 'active'), 0)
+                     ELSE 0 END";
+    }
+
     public function remaining(int $saleId): float
     {
-        $row = Database::one(
-            "SELECT s.total_amount, s.paid_amount, s.status,
-                COALESCE((SELECT SUM(amount) FROM collections c WHERE c.sale_id = s.id AND c.status = 'active'), 0) AS collected
-             FROM sales s WHERE s.id = ?",
+        $remaining = Database::scalar(
+            'SELECT ' . self::remainingSql('s') . ' FROM sales s WHERE s.id = ?',
             [$saleId]
         );
 
-        if ($row === null) {
-            return 0.0;
-        }
-
-        // الفاتورة الملغاة لا متبقي عليها: الإلغاء يُلغي الالتزام ويُعكس المدفوع والتحصيلات،
-        // فإرجاع المتبقي المحسوب لفاتورة ملغاة كان يعرض مبلغًا وهميًا في شاشة الفاتورة.
-        if ($row['status'] !== 'active') {
-            return 0.0;
-        }
-
-        return round((float) $row['total_amount'] - (float) $row['paid_amount'] - (float) $row['collected'], 2);
+        return round((float) $remaining, 2);
     }
 
     /** فواتير موزّع نشطة عليها مبلغ متبقٍ. */
@@ -89,8 +91,7 @@ final class Sale extends Model
     {
         return Database::all(
             "SELECT s.id, s.invoice_number, s.sale_date, s.total_amount, s.paid_amount, s.payment_type,
-                (s.total_amount - s.paid_amount
-                 - COALESCE((SELECT SUM(c.amount) FROM collections c WHERE c.sale_id = s.id AND c.status = 'active'), 0)) AS remaining
+                " . self::remainingSql('s') . " AS remaining
              FROM sales s
              WHERE s.distributor_id = ? AND s.status = 'active'
              HAVING remaining > 0
@@ -106,7 +107,8 @@ final class Sale extends Model
 
         return Database::all(
             'SELECT s.*, d.name AS distributor_name,
-                    (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS items_count
+                    (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS items_count,
+                    ' . self::remainingSql('s') . ' AS remaining
              FROM sales s LEFT JOIN distributors d ON d.id = s.distributor_id
              WHERE ' . $where . '
              ORDER BY s.sale_date DESC, s.id DESC
@@ -124,16 +126,21 @@ final class Sale extends Model
     /**
      * إجماليات مطابقة لنفس فلاتر القائمة (لا تعتمد على الصفحة المعروضة)،
      * فلا يختلف المجموع المعروض عن السجلات الفعلية المطابقة للتصفية.
+     * الأرقام المالية للفواتير **النشطة** فقط: الفاتورة الملغاة لا تُحتسب في الإجمالي
+     * ولا في المدفوع ولا في الآجل، كما في لوحة التحكم وصفحة الفاتورة.
      * @param array<string,mixed> $filters
-     * @return array{count:int,total:float,paid:float}
+     * @return array{count:int,total:float,paid:float,remaining:float}
      */
     public function totalsFiltered(array $filters = []): array
     {
         [$where, $params] = $this->buildFilters($filters);
         $row = Database::one(
-            'SELECT COUNT(*) AS c, COALESCE(SUM(s.total_amount), 0) AS total, COALESCE(SUM(s.paid_amount), 0) AS paid
+            "SELECT COUNT(*) AS c,
+                    COALESCE(SUM(CASE WHEN s.status = 'active' THEN s.total_amount END), 0) AS total,
+                    COALESCE(SUM(CASE WHEN s.status = 'active' THEN s.paid_amount END), 0) AS paid,
+                    COALESCE(SUM(" . self::remainingSql('s') . "), 0) AS remaining
              FROM sales s LEFT JOIN distributors d ON d.id = s.distributor_id
-             WHERE ' . $where,
+             WHERE " . $where,
             $params
         ) ?? [];
 
@@ -141,6 +148,7 @@ final class Sale extends Model
             'count' => (int) ($row['c'] ?? 0),
             'total' => round((float) ($row['total'] ?? 0), 2),
             'paid' => round((float) ($row['paid'] ?? 0), 2),
+            'remaining' => round((float) ($row['remaining'] ?? 0), 2),
         ];
     }
 
