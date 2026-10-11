@@ -42,9 +42,11 @@ $isPaid = (float) $remaining <= 0;
                 <span class="badge <?= $isActive ? 'badge--success' : 'badge--danger' ?>">
                     <?= $isActive ? 'نشطة' : 'ملغاة' ?>
                 </span>
-                <span class="badge <?= $isPaid ? 'badge--success' : 'badge--danger' ?>">
-                    <?= $isPaid ? 'مدفوعة' : 'غير مدفوعة' ?>
-                </span>
+                <?php if ($isActive): // الفاتورة الملغاة بلا شارة سداد: الإلغاء يُصفّر المتبقي ويعكس المدفوع والتحصيلات، فكانت الشارة تعرض «مدفوعة» على فاتورة ملغاة ?>
+                    <span class="badge <?= $isPaid ? 'badge--success' : 'badge--danger' ?>">
+                        <?= $isPaid ? 'مدفوعة' : 'غير مدفوعة' ?>
+                    </span>
+                <?php endif; ?>
             </div>
         </div>
     </div>
