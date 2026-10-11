@@ -15,15 +15,21 @@ $groups = [
     'withdrawals' => ['سحوبات المالك', 'wallet'],
     'cash' => ['حركات الصندوق', 'chart'],
 ];
+
+// المصروفات وسحوبات المالك للمدير فقط: تُخفى مجموعاتها من نتائج الموظف (وشاشاتها ترد 403 له) — M6
+if (!is_admin()) {
+    unset($groups['expenses'], $groups['withdrawals']);
+}
+
 $totalResults = 0;
-foreach ($results as $rows) {
-    $totalResults += count($rows);
+foreach ($groups as $key => $meta) {
+    $totalResults += count($results[$key] ?? []);
 }
 ?>
 <div class="page-header">
     <div>
         <h1>البحث الشامل</h1>
-        <p>ابحث في الباقات والموزعين والفواتير والتحصيلات والمصروفات والخطوط وحركات الصندوق.</p>
+        <p><?= is_admin() ? 'ابحث في الباقات والموزعين والفواتير والتحصيلات والمصروفات والخطوط وحركات الصندوق.' : 'ابحث في الباقات والموزعين والفواتير والتحصيلات والخطوط وحركات الصندوق.' ?></p>
     </div>
 </div>
 

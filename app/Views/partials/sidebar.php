@@ -28,8 +28,16 @@ $adminNav = [
     ['/backup', 'النسخ الاحتياطي', 'database'],
 ];
 
+// شاشات المالية/التقارير وسجل التدقيق للمدير فقط، فتُخفى تمامًا من قائمة الموظف (والمسارات ترد 403 له).
+$adminOnlyPaths = ['/expenses', '/owner-withdrawals', '/reports', '/audit'];
+
 if (is_admin()) {
     $nav = array_merge($nav, $adminNav);
+} else {
+    $nav = array_values(array_filter(
+        $nav,
+        static fn (array $item): bool => !in_array($item[0], $adminOnlyPaths, true)
+    ));
 }
 ?>
 <aside class="sidebar" data-sidebar>

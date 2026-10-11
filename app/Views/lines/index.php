@@ -8,9 +8,11 @@
 <div class="page-header">
     <div>
         <h1>خطوط الإنترنت</h1>
-        <p>إدارة الخطوط ومزودي الخدمة وتكاليف الاشتراك.</p>
+        <p><?= is_admin() ? 'إدارة الخطوط ومزودي الخدمة وتكاليف الاشتراك.' : 'عرض الخطوط وتكاليفها. الإضافة والتعديل متاحة للمدير فقط.' ?></p>
     </div>
-    <button type="button" class="btn btn--primary" data-modal-open="line-create"><?= icon('plus') ?> خط جديد</button>
+    <?php if (is_admin()): ?>
+        <button type="button" class="btn btn--primary" data-modal-open="line-create"><?= icon('plus') ?> خط جديد</button>
+    <?php endif; ?>
 </div>
 
 <?php if ($lines === []): ?>
@@ -18,8 +20,10 @@
         <div class="empty-state">
             <div class="empty-state__icon"><?= icon('wifi') ?></div>
             <h2>لا توجد خطوط</h2>
-            <p>أضف أول خط لتسجيل دفعاته.</p>
-            <button type="button" class="btn btn--primary" data-modal-open="line-create"><?= icon('plus') ?> إضافة خط</button>
+            <p><?= is_admin() ? 'أضف أول خط لتسجيل دفعاته.' : 'لا توجد خطوط متاحة حاليًا.' ?></p>
+            <?php if (is_admin()): ?>
+                <button type="button" class="btn btn--primary" data-modal-open="line-create"><?= icon('plus') ?> إضافة خط</button>
+            <?php endif; ?>
         </div>
     </div>
 <?php else: ?>
@@ -49,22 +53,23 @@
 
                 <div class="btn-group mt-3">
                     <a class="btn btn--outline btn--sm" href="<?= e(url('/lines/' . $line['id'])) ?>"><?= icon('history') ?> التفاصيل</a>
-                    <button type="button" class="btn btn--outline btn--sm" data-fill="line-edit"
-                            data-action="<?= e(url('/lines')) ?>/{id}/update"
-                            data-values='<?= e(json_encode([
-                                'id' => (int) $line['id'],
-                                'name' => $line['name'],
-                                'provider' => $line['provider'],
-                                'identifier' => $line['identifier'],
-                                'speed' => $line['speed'],
-                                'subscription_cost' => amount($line['subscription_cost']),
-                                'subscription_date' => $line['subscription_date'],
-                                'status' => $line['status'],
-                                'notes' => $line['notes'],
-                            ], JSON_UNESCAPED_UNICODE)) ?>'>
-                        <?= icon('edit') ?> تعديل
-                    </button>
-                    <?php if (is_admin()): // حذف الخط للمدير فقط (مفروض على الخادم أيضًا) ?>
+                    <?php if (is_admin()): // تعديل الخط للمدير فقط (مفروض على الخادم أيضًا) ?>
+                        <button type="button" class="btn btn--outline btn--sm" data-fill="line-edit"
+                                data-action="<?= e(url('/lines')) ?>/{id}/update"
+                                data-values='<?= e(json_encode([
+                                    'id' => (int) $line['id'],
+                                    'name' => $line['name'],
+                                    'provider' => $line['provider'],
+                                    'identifier' => $line['identifier'],
+                                    'speed' => $line['speed'],
+                                    'subscription_cost' => amount($line['subscription_cost']),
+                                    'subscription_date' => $line['subscription_date'],
+                                    'status' => $line['status'],
+                                    'notes' => $line['notes'],
+                                ], JSON_UNESCAPED_UNICODE)) ?>'>
+                            <?= icon('edit') ?> تعديل
+                        </button>
+
                         <form method="post" action="<?= e(url('/lines/' . $line['id'] . '/delete')) ?>">
                             <?= csrf_field() ?>
                             <button type="submit" class="btn btn--soft-danger btn--sm"
@@ -79,7 +84,7 @@
     </div>
 <?php endif; ?>
 
-<?php $emptyLine = null; ?>
+<?php if (is_admin()): // نماذج الإضافة/التعديل للمدير فقط (والمسارات محمية على الخادم) ?>
 <div class="modal" id="line-create" hidden>
     <div class="modal__overlay" data-modal-close></div>
     <div class="modal__panel">
@@ -119,3 +124,4 @@
         </div>
     </div>
 </div>
+<?php endif; ?>

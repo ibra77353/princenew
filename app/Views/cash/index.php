@@ -17,9 +17,11 @@
         <h1>الصندوق</h1>
         <p>الرصيد = الرصيد الافتتاحي + إجمالي المقبوضات − إجمالي المدفوعات.</p>
     </div>
-    <div class="btn-group">
-        <a class="btn btn--outline" href="<?= e(url('/reports')) ?>"><?= icon('chart') ?> تقارير التدفق النقدي</a>
-    </div>
+    <?php if (is_admin()): // التقارير للمدير فقط، والرابط يرد 403 للموظف ?>
+        <div class="btn-group">
+            <a class="btn btn--outline" href="<?= e(url('/reports')) ?>"><?= icon('chart') ?> تقارير التدفق النقدي</a>
+        </div>
+    <?php endif; ?>
 </div>
 
 <div class="grid grid--stats mb-4">

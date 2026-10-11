@@ -93,27 +93,29 @@ $router->post('/collections', [\App\Controllers\CollectionsController::class, 's
 $router->get('/collections/outstanding', [\App\Controllers\CollectionsController::class, 'outstanding'], $auth);
 
 // ── الخطوط ودفعاتها ───────────────────────────────────────────────────────
+// الموظف يعرض الخطوط ويختار الخط في الدفعات؛ الإضافة/التعديل/الحذف للمدير فقط (مفروض على الخادم) — M6
 $router->get('/lines', [\App\Controllers\LinesController::class, 'index'], $auth);
-$router->post('/lines', [\App\Controllers\LinesController::class, 'store'], $auth);
-$router->post('/lines/{id}/update', [\App\Controllers\LinesController::class, 'update'], $auth);
+$router->post('/lines', [\App\Controllers\LinesController::class, 'store'], $admin);
+$router->post('/lines/{id}/update', [\App\Controllers\LinesController::class, 'update'], $admin);
 $router->post('/lines/{id}/delete', [\App\Controllers\LinesController::class, 'destroy'], $admin);
 $router->get('/lines/{id}', [\App\Controllers\LinesController::class, 'show'], $auth);
 $router->get('/line-payments', [\App\Controllers\LinePaymentsController::class, 'index'], $auth);
 $router->post('/line-payments', [\App\Controllers\LinePaymentsController::class, 'store'], $auth);
 
-// ── المصروفات وسحوبات المالك ──────────────────────────────────────────────
-$router->get('/expenses', [\App\Controllers\ExpensesController::class, 'index'], $auth);
-$router->post('/expenses', [\App\Controllers\ExpensesController::class, 'store'], $auth);
-$router->get('/owner-withdrawals', [\App\Controllers\OwnerWithdrawalsController::class, 'index'], $auth);
-$router->post('/owner-withdrawals', [\App\Controllers\OwnerWithdrawalsController::class, 'store'], $auth);
+// ── المصروفات وسحوبات المالك (للمدير فقط) ─────────────────────────────────
+// عمليات مالية حسّاسة على الصندوق: تُخفى شاشاتها من الموظف وتُرفض برد 403 — M6
+$router->get('/expenses', [\App\Controllers\ExpensesController::class, 'index'], $admin);
+$router->post('/expenses', [\App\Controllers\ExpensesController::class, 'store'], $admin);
+$router->get('/owner-withdrawals', [\App\Controllers\OwnerWithdrawalsController::class, 'index'], $admin);
+$router->post('/owner-withdrawals', [\App\Controllers\OwnerWithdrawalsController::class, 'store'], $admin);
 
 // ── الصندوق والتقارير والبحث ──────────────────────────────────────────────
 $router->get('/cash', [\App\Controllers\CashController::class, 'index'], $auth);
-$router->get('/reports', [\App\Controllers\ReportsController::class, 'index'], $auth);
+$router->get('/reports', [\App\Controllers\ReportsController::class, 'index'], $admin);
 $router->get('/search', [\App\Controllers\SearchController::class, 'index'], $auth);
 
-// ── سجل التدقيق ───────────────────────────────────────────────────────────
-$router->get('/audit', [\App\Controllers\AuditLogController::class, 'index'], $auth);
+// ── سجل التدقيق (للمدير فقط) ─────────────────────────────────────────────
+$router->get('/audit', [\App\Controllers\AuditLogController::class, 'index'], $admin);
 
 // ── المستخدمون والإعدادات والنسخ الاحتياطي (للمدير فقط) ─────────────────
 $router->get('/users', [\App\Controllers\UsersController::class, 'index'], $admin);

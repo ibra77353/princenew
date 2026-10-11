@@ -162,9 +162,11 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
 دورَان فقط ولا ثالث لهما، والقيمة المخزَّنة في `users.role = ENUM('admin','employee')`:
 
 - **`admin`** — صلاحية كاملة، بما فيها الإعدادات والنسخ الاحتياطي وإدارة المستخدمين وحذف السجلات الحساسة وإلغاء الفواتير.
-- **`employee`** — تشغيل محدود: مبيعات نقدية وآجلة، تحصيلات، خطوط ودفعاتها، مصروفات، صندوق وتقارير وبحث.
-  أما **الباقات والمخزون والموزعون فـ«عرض فقط»** للموظف: يعرضها ويختار الموزع/الباقة في المبيعات والتحصيلات،
-  لكنه **لا** يضيف/يعدّل/يحذف فيها ولا يغيّر الأرصدة يدويًا. البيع يخصم المخزون وإلغاء الفاتورة (مدير) يُرجعه تلقائيًا.
+- **`employee`** — تشغيل محدود: مبيعات نقدية وآجلة، تحصيلات، دفعات الخطوط، الصندوق، والبحث.
+  أما **الباقات والمخزون والموزعون والخطوط فـ«عرض فقط»** للموظف: يعرضها ويختار الموزع/الباقة/الخط في
+  المبيعات والتحصيلات ودفعات الخطوط، لكنه **لا** يضيف/يعدّل/يحذف فيها ولا يغيّر الأرصدة يدويًا.
+  و**المصروفات وسحوبات المالك والتقارير وسجل التدقيق للمدير فقط**: شاشاتها وقوائمها مُخفاة تمامًا عن الموظف
+  وتُرفض برد 403 إن طلبها مباشرة. البيع يخصم المخزون وإلغاء الفاتورة (مدير) يُرجعه تلقائيًا.
 
 الفرض **على الخادم لا في الواجهة**: `Auth::ROLE_ADMIN`/`ROLE_EMPLOYEE` و`Auth::isAdmin()` و`Auth::requireAdmin()`
 (ترد 403 «هذه العملية متاحة للمدير فقط») في `app/Services/Core/Auth.php`، ويستدعيها وسيط `admin` في
@@ -173,18 +175,24 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
 - كل مسارات `/users` و`/settings` و`/backup` (تصدير/استعادة/تنزيل/حذف).
 - العمليات الحساسة (مسار مستقل لكل منها): `/packages/{id}/delete`, `/lines/{id}/delete`,
   `/distributors/{id}/delete`, `/sales/{id}/cancel`.
-- **إضافة/تعديل الباقات والمخزون والموزعين** (منع الموظف من تغيير البيانات الأساسية — طلب لاحق):
+- **إضافة/تعديل الباقات والمخزون والموزعين والخطوط** (منع الموظف من تغيير البيانات الأساسية):
   `POST /packages`, `POST /packages/{id}/update`, `POST /packages/{id}/toggle`,
   `POST /inventory/add`, `POST /inventory/adjust`,
-  `POST /distributors`, `POST /distributors/{id}/update`.
-  مسارات العرض تبقى `$auth` لكل الأدوار: `GET /packages`, `GET /inventory`, `GET /distributors`, `GET /distributors/{id}`.
+  `POST /distributors`, `POST /distributors/{id}/update`,
+  `POST /lines`, `POST /lines/{id}/update`.
+  مسارات العرض تبقى `$auth` لكل الأدوار: `GET /packages`, `GET /inventory`, `GET /distributors`,
+  `GET /distributors/{id}`, `GET /lines`, `GET /lines/{id}`.
+- **شاشات المصروفات وسحوبات المالك والتقارير وسجل التدقيق للمدير فقط** (طلب لاحق):
+  `GET/POST /expenses`, `GET/POST /owner-withdrawals`, `GET /reports`, `GET /audit`.
+  أما `/cash` و`/search` فيبقيان `$auth` للموظف مع إخفاء ما لا يُسمح به داخلهما: البحث يحذف مجموعتَي
+  المصروفات والسحوبات لغير المدير، والصندوق يخفي زر «تقارير التدفق النقدي».
 - أي عملية إضافة/تعديل جديدة على هذه الوحدات يجب أن تُمنح الوسيط `$admin` **وإلا** صارت متاحة للموظف (الافتراضي `$auth`).
 
 قواعد الحماية الذاتية في `UsersController`: لا يغيّر المدير دوره، ولا يعطّل حسابه، ولا يحذفه، ولا يمكن إزالة دور
 المدير عن آخر حساب مدير نشط (منعًا لإقفال النظام). أي قيمة دور غير معروفة تُعالَج كـ`employee` (أقل صلاحية).
 
-- الواجهة تخفي فقط ما لا يُسمح به (`is_admin()` في `sidebar.php` وأزرار الحذف/الإلغاء) — الإخفاء تحسين تجربة
-  لا حماية؛ الحماية الحقيقية هي الوسيط و`requireAdmin()`.
+- الواجهة تخفي فقط ما لا يُسمح به (`is_admin()` في `sidebar.php` عبر قائمة `$adminOnlyPaths`، وفي أزرار
+  الإضافة/التعديل/الحذف/إلغاء الفاتورة) — الإخفاء تحسين تجربة لا حماية؛ الحماية الحقيقية هي الوسيط و`requireAdmin()`.
 - إضافة مسار إداري جديد = ضعه في قائمة `$admin`، وإضافة عملية حساسة = أعطها مسارًا مستقلًا بالوسيط `admin`.
 - `AuditService::log()` يسجّل هوية المنفّذ تلقائيًا (`Auth::id()` و`Auth::name()`)؛ كل عملية مالية (بيع، تحصيل،
   مصروف، دفعة خط، سحب، حركة مخزون) تُسجَّل عبره، فلا تُكتب صفوف `audit_logs` يدويًا ولا تُعدَّل.
@@ -221,6 +229,21 @@ done
 curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar -X POST "$E/sales" --data-urlencode "_token=$TOKEN"      # 302 (لا 403)
 ```
 (`$TOKEN` = رمز CSRF من صفحة داخل الجلسة، مثل نموذج تسجيل الخروج في القائمة الجانبية.)
+
+**اختبار تقييد الموظف على الخطوط والشاشات الإدارية** (طلب لاحق): الخطوط للموظف عرض فقط، والمصروفات
+وسحوبات المالك والتقارير وسجل التدقيق تُرفض له حتى في طلبات GET:
+
+```bash
+E=http://localhost:3000
+for p in /lines /lines/1/update; do
+  echo "$(curl -s -o /dev/null -w '%{http_code}' -b emp.jar -X POST "$E$p" --data-urlencode "_token=$TOKEN")  POST $p"   # 403
+done
+for p in /expenses /owner-withdrawals /reports /audit; do
+  echo "$(curl -s -o /dev/null -w '%{http_code}' -b emp.jar "$E$p")  GET $p"   # 403
+done
+curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar "$E/lines"        # 200 (عرض)
+curl -s -o /dev/null -w '%{http_code}\n' -b emp.jar "$E/line-payments" # 200 (دفعات الخطوط تبقى للموظف)
+```
 
 ---
 
