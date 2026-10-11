@@ -11,9 +11,12 @@
         <h1>إدارة الموزعين</h1>
         <p><?= is_admin() ? 'إدارة بيانات الموزعين وكشوف الحسابات.' : 'عرض الموزعين وكشوف حساباتهم. الإضافة والتعديل متاحة للمدير فقط.' ?></p>
     </div>
-    <?php if (is_admin()): ?>
-        <button type="button" class="btn btn--primary" data-modal-open="distributor-create"><?= icon('plus') ?> موزع جديد</button>
-    <?php endif; ?>
+    <div class="btn-group">
+        <a class="btn btn--outline" href="<?= e(url('/distributors/statement')) ?>"><?= icon('receipt') ?> كشف حساب موزع</a>
+        <?php if (is_admin()): ?>
+            <button type="button" class="btn btn--primary" data-modal-open="distributor-create"><?= icon('plus') ?> موزع جديد</button>
+        <?php endif; ?>
+    </div>
 </div>
 
 <form method="get" action="<?= e(url('/distributors')) ?>" class="filters">

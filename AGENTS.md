@@ -181,7 +181,8 @@ docker compose -f docker-compose.base44.yml exec -T db mysql --default-character
   `POST /distributors`, `POST /distributors/{id}/update`,
   `POST /lines`, `POST /lines/{id}/update`.
   مسارات العرض تبقى `$auth` لكل الأدوار: `GET /packages`, `GET /inventory`, `GET /distributors`,
-  `GET /distributors/{id}`, `GET /lines`, `GET /lines/{id}`.
+  `GET /distributors/{id}`, `GET /distributors/statement` (كشف حساب موزع: عرض فقط لكل الأدوار),
+  `GET /lines`, `GET /lines/{id}`.
 - **شاشات المصروفات وسحوبات المالك والتقارير وسجل التدقيق للمدير فقط** (طلب لاحق):
   `GET/POST /expenses`, `GET/POST /owner-withdrawals`, `GET /reports`, `GET /audit`.
   أما `/cash` و`/search` فيبقيان `$auth` للموظف مع إخفاء ما لا يُسمح به داخلهما: البحث يحذف مجموعتَي
@@ -372,12 +373,23 @@ SELECT package_id, SUM(CASE ... END), NOW() FROM inventory_movements GROUP BY pa
   (`totalsFiltered`) فلا يفترق المجموع عن المعروض.
 - لا تُعِد حساب المتبقي في العرض: يأتي من `Sale::remainingSql` عبر `listing()`.
 
-### كشف حساب الموزع (`distributors/show.php`)
+### كشف حساب الموزع (`distributors/statement` + `distributors/show.php`)
 
+- مدخلان لنفس المستند: `GET /distributors/{id}` من بطاقة الموزع في القائمة، و`GET /distributors/statement`
+  («كشف حساب موزع») باختيار اسم الموزع والفترة من مكان واحد. المسار الجديد **مُسجَّل في `index.php` قبل
+  `/distributors/{id}`** لأن `{id}` يطابق أي مقطع بلا شرط؛ لو تأخّر لالتقطه المسار العام وردّ 404 («الموزع غير موجود»).
+- الاثنان يستدعيان `DistributorsController::renderStatement($id)` (`show()` تمرّر معرّف المسار، و`statement()`
+  تمرّر `distributor_id` من الطلب)، وقائمة الاختيار من `Distributor::active()` ويُضاف إليها الموزع الحالي إن كان
+  **معطّلًا** حتى لا يختفي من الاختيار عند فتح كشفه.
+- نموذج واحد في الصفحة (اسم الموزع + من/إلى) يرسل GET إلى `/distributors/statement`، فتبديل الموزع والفترة لا يحتاج
+  أي JavaScript. بلا موزع مختار تظهر شاشة اختيار فارغة (لا مستند ولا زر طباعة) بدل خطأ.
 - فلتر فترة (من/إلى) يقصر **الفواتير والتحصيلات ومجموعهما** على الفترة (`Sale::listing` + `Collection::forDistributor`)،
   أما «الرصيد المستحق» فيبقى `Distributor::balance()` على كل الفترات لأن الدين لا يتوقّف عند حدّ الفترة.
 - المستند كله داخل `.print-area` مع زر `data-print` في الترويسة (خارج المنطقة) وترويسة ورقية `.print-only`
   تحمل الموزع والفترة والرصيد — نفس قاعدة الطباعة أعلاه، فأي شاشة طباعة بلا `.print-area` تطبع فارغة.
+- تحقق سريع (بجلسة مصرّح لها): `GET /distributors/statement` يعرض قائمة الاختيار، و
+  `GET /distributors/statement?distributor_id=8&from=2020-01-01&to=2020-12-31` يعرض صفر صفوف وإجماليات صفرية
+  مع بقاء «الرصيد المستحق» رصيد الموزع الحالي (كل الفترات).
 
 ### عمود «المنفّذ» في سجل حركات المخزون (`inventory/index.php`)
 

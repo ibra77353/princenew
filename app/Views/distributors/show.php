@@ -1,7 +1,8 @@
 <?php
 /**
- * تفاصيل الموزع: البيانات، الأرصدة، الفواتير، والتحصيلات.
- * @var array<string,mixed> $distributor
+ * كشف حساب موزع: اختيار الموزع والفترة، ثم بياناته وأرصدته وفواتيره وتحصيلاته.
+ * @var array<string,mixed>|null $distributor الموزع المختار (null قبل الاختيار)
+ * @var array<int,array<string,mixed>> $distributors قائمة الموزعين للاختيار
  * @var array<int,array<string,mixed>> $sales
  * @var array<int,array<string,mixed>> $collections
  * @var float $activeSalesTotal
@@ -11,23 +12,43 @@
  * @var array{from:string,to:string} $filters
  * @var string $rangeError
  */
+$selectedId = $distributor !== null ? (int) $distributor['id'] : 0;
+$statementUrl = url('/distributors/statement') . ($selectedId > 0 ? '?distributor_id=' . $selectedId : '');
 ?>
 <div class="page-header">
     <div>
-        <h1><?= e($distributor['name']) ?></h1>
-        <p>
-            <?= e($distributor['phone'] ?? 'بدون هاتف') ?>
-            <?= !empty($distributor['address']) ? ' • ' . e($distributor['address']) : '' ?>
-        </p>
+        <?php if ($distributor === null): ?>
+            <h1>كشف حساب موزع</h1>
+            <p>اختر اسم الموزع والفترة ثم اعرض الكشف أو اطبعه.</p>
+        <?php else: ?>
+            <h1><?= e($distributor['name']) ?></h1>
+            <p>
+                <?= e($distributor['phone'] ?? 'بدون هاتف') ?>
+                <?= !empty($distributor['address']) ? ' • ' . e($distributor['address']) : '' ?>
+            </p>
+        <?php endif; ?>
     </div>
     <div class="btn-group">
         <a class="btn btn--outline" href="<?= e(url('/distributors')) ?>">رجوع</a>
-        <a class="btn btn--primary" href="<?= e(url('/collections')) ?>"><?= icon('coins') ?> تسجيل تحصيل</a>
-        <button type="button" class="btn btn--outline" data-print><?= icon('printer') ?> طباعة الكشف</button>
+        <?php if ($distributor !== null): ?>
+            <a class="btn btn--primary" href="<?= e(url('/collections')) ?>"><?= icon('coins') ?> تسجيل تحصيل</a>
+            <button type="button" class="btn btn--outline" data-print><?= icon('printer') ?> طباعة الكشف</button>
+        <?php endif; ?>
     </div>
 </div>
 
-<form method="get" action="<?= e(url('/distributors/' . $distributor['id'])) ?>" class="filters no-print">
+<form method="get" action="<?= e(url('/distributors/statement')) ?>" class="filters no-print">
+    <div class="field field--wide">
+        <label for="d-distributor">اسم الموزع</label>
+        <select class="select" id="d-distributor" name="distributor_id">
+            <option value="">— اختر الموزع —</option>
+            <?php foreach ($distributors as $option): ?>
+                <option value="<?= e((string) $option['id']) ?>" <?= (int) $option['id'] === $selectedId ? 'selected' : '' ?>>
+                    <?= e($option['name']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
     <div class="field">
         <label for="d-from">من تاريخ</label>
         <input class="input" id="d-from" name="from" type="date" value="<?= e($filters['from']) ?>">
@@ -39,13 +60,25 @@
     <div class="field self-end">
         <button type="submit" class="btn btn--primary"><?= icon('chart') ?> عرض الكشف</button>
     </div>
-    <div class="field self-end">
-        <a class="btn btn--outline" href="<?= e(url('/distributors/' . $distributor['id'])) ?>">كل الفترات</a>
-    </div>
+    <?php if ($distributor !== null): ?>
+        <div class="field self-end">
+            <a class="btn btn--outline" href="<?= e($statementUrl) ?>">كل الفترات</a>
+        </div>
+    <?php endif; ?>
 </form>
 
 <?php \App\Services\Core\View::partial('partials/filter-warning', ['rangeError' => $rangeError ?? '']); ?>
 
+<?php if ($distributor === null): // لا موزع مختار بعد: شاشة الاختيار فقط ?>
+    <div class="card card--pad">
+        <div class="empty-state">
+            <div class="empty-state__icon"><?= icon('receipt') ?></div>
+            <h2>اختر موزعًا لعرض كشفه</h2>
+            <p>يظهر الكشف بعد الاختيار: كل فواتيره، والتحصيلات التي قام بها، والرصيد المستحق عليه حاليًا — ويمكن حصر الفواتير والتحصيلات بفترة.</p>
+            <a class="btn btn--outline" href="<?= e(url('/distributors')) ?>"><?= icon('users') ?> قائمة الموزعين</a>
+        </div>
+    </div>
+<?php else: ?>
 <div class="print-area">
     <?php // ترويسة ورقية: تُعرض في الطباعة فقط، فتبيّن الورقة صاحب الكشف ونطاقه وحالة الدين ?>
     <div class="print-only mb-4">
@@ -97,7 +130,7 @@
             <div class="empty-state">
                 <div class="empty-state__icon"><?= icon('cart') ?></div>
                 <p>لا توجد مبيعات.</p>
-                <a class="btn btn--primary" href="<?= e(url('/sales/create')) ?>">إنشاء فاتورة</a>
+                <a class="btn btn--primary no-print" href="<?= e(url('/sales/create')) ?>">إنشاء فاتورة</a>
             </div>
         </div>
     <?php else: ?>
@@ -183,3 +216,4 @@
     <?php endif; ?>
 </section>
 </div>
+<?php endif; ?>

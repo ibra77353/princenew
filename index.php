@@ -74,6 +74,8 @@ $router->post('/inventory/adjust', [\App\Controllers\InventoryController::class,
 // ── الموزعون ──────────────────────────────────────────────────────────────
 // الموظف يعرض الموزعين ويختارهم في المبيعات/التحصيلات؛ الإضافة/التعديل/الحذف للمدير فقط
 $router->get('/distributors', [\App\Controllers\DistributorsController::class, 'index'], $auth);
+// كشف حساب موزع: اختيار الموزع والفترة من شاشة واحدة (يُسجَّل قبل {id} حتى لا يلتقطه المسار العام)
+$router->get('/distributors/statement', [\App\Controllers\DistributorsController::class, 'statement'], $auth);
 $router->post('/distributors', [\App\Controllers\DistributorsController::class, 'store'], $admin);
 $router->post('/distributors/{id}/update', [\App\Controllers\DistributorsController::class, 'update'], $admin);
 $router->post('/distributors/{id}/delete', [\App\Controllers\DistributorsController::class, 'destroy'], $admin);

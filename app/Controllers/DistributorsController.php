@@ -113,12 +113,25 @@ final class DistributorsController extends Controller
         }, '/distributors', 'تم حذف الموزع.');
     }
 
+    /** كشف حساب موزع (يُفتح من بطاقة الموزع في القائمة). */
     public function show(array $params): void
     {
-        $id = (int) $params['id'];
-        $distributor = (new Distributor())->find($id);
+        $this->renderStatement((int) $params['id']);
+    }
 
-        if ($distributor === null) {
+    /** شاشة «كشف حساب موزع»: اختيار اسم الموزع والفترة من مكان واحد ثم عرض الكشف وطباعته. */
+    public function statement(): void
+    {
+        $this->renderStatement($this->int('distributor_id'));
+    }
+
+    /** مستند الكشف: شاشة اختيار فقط قبل تحديد الموزع، ويكتمل بالبيانات والفترة بعده. */
+    private function renderStatement(int $id): void
+    {
+        $model = new Distributor();
+        $distributor = $id > 0 ? $model->find($id) : null;
+
+        if ($id > 0 && $distributor === null) {
             \App\Services\Core\Response::abort(404, 'الموزع غير موجود');
 
             return;
@@ -128,8 +141,10 @@ final class DistributorsController extends Controller
         // أما «الرصيد المستحق» فيبقى رصيد الموزع الحالي على كل الفترات لأن الدين لا يتوقّف عند حدّ الفترة.
         ['from' => $from, 'to' => $to, 'error' => $rangeError] = $this->dateRange();
 
-        $sales = (new Sale())->listing(['distributor_id' => $id, 'from' => $from, 'to' => $to], 200);
-        $collections = (new Collection())->forDistributor($id, $from, $to);
+        $sales = $distributor === null
+            ? []
+            : (new Sale())->listing(['distributor_id' => $id, 'from' => $from, 'to' => $to], 200);
+        $collections = $distributor === null ? [] : (new Collection())->forDistributor($id, $from, $to);
 
         $activeSalesTotal = 0.0;
         $paidAtSale = 0.0;
@@ -148,17 +163,42 @@ final class DistributorsController extends Controller
         }
 
         $this->view('distributors/show', [
-            'title' => 'تفاصيل الموزع',
+            'title' => $distributor === null ? 'كشف حساب موزع' : 'كشف حساب ' . $distributor['name'],
             'distributor' => $distributor,
+            'distributors' => $this->statementOptions($model, $distributor),
             'sales' => $sales,
             'collections' => $collections,
             'activeSalesTotal' => round($activeSalesTotal, 2),
             'paidAtSale' => round($paidAtSale, 2),
             'validCollections' => round($validCollections, 2),
-            'balance' => (new Distributor())->balance($id),
+            'balance' => $distributor === null ? 0.0 : $model->balance($id),
             'filters' => ['from' => $from, 'to' => $to],
             'rangeError' => $rangeError,
         ]);
+    }
+
+    /**
+     * قائمة اختيار الموزع في شاشة الكشف: الموزعون النشطون، ويُضاف الموزع الحالي إن كان معطّلًا
+     * حتى لا يختفي من الاختيار عند فتح كشفه.
+     * @return array<int,array<string,mixed>>
+     */
+    private function statementOptions(Distributor $model, ?array $current): array
+    {
+        $options = $model->active();
+
+        if ($current === null) {
+            return $options;
+        }
+
+        foreach ($options as $option) {
+            if ((int) $option['id'] === (int) $current['id']) {
+                return $options;
+            }
+        }
+
+        $options[] = $current;
+
+        return $options;
     }
 
     /** @return array<string,string> */
